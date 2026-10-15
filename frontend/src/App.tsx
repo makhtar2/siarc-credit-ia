@@ -8,9 +8,6 @@ import {
   MdNotificationsNone,
   MdAdd,
   MdSettings,
-  MdAccountBalance,
-  MdSecurity,
-  MdFolderOpen,
 } from 'react-icons/md';
 import { DashboardOverview } from './pages/DashboardOverview';
 import { DonneesPage } from './pages/DonneesPage';
@@ -20,29 +17,29 @@ import { fetchOverview } from './lib/api';
 import { Spinner } from './components/ui/Spinner';
 import liquidBg from './assets/liquid-glass-bg.jpg';
 
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', Icon: MdDashboard },
-  { id: 'portefeuille', label: 'Portefeuille', Icon: MdTableChart },
-  { id: 'modele', label: 'Modèle ML', Icon: MdAutoGraph },
-  { id: 'simulateur', label: 'Simulateur & Scoring', Icon: MdBolt },
+const ELEMENTS_NAVIGATION = [
+  { id: 'dashboard', label: "Vue d'Ensemble", Icon: MdDashboard },
+  { id: 'portefeuille', label: 'Portefeuille & Prêts', Icon: MdTableChart },
+  { id: 'modele', label: 'Modèle de Risque', Icon: MdAutoGraph },
+  { id: 'simulateur', label: "Simulateur d'Octroi", Icon: MdBolt },
 ] as const;
 
-type NavId = typeof NAV_ITEMS[number]['id'];
+type NavId = typeof ELEMENTS_NAVIGATION[number]['id'];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<NavId>('dashboard');
-  const [overview, setOverview] = useState<any>(null);
-  const [currentDate, setCurrentDate] = useState('');
+  const [ongletActif, setOngletActif] = useState<NavId>('dashboard');
+  const [vueEnsemble, setVueEnsemble] = useState<any>(null);
+  const [dateCourante, setDateCourante] = useState('');
 
   useEffect(() => {
-    fetchOverview().then(setOverview).catch(console.error);
+    fetchOverview().then(setVueEnsemble).catch(console.error);
 
-    const now = new Date();
-    setCurrentDate(
-      now.toLocaleDateString('fr-FR', {
-        weekday: 'short',
+    const maintenant = new Date();
+    setDateCourante(
+      maintenant.toLocaleDateString('fr-FR', {
+        weekday: 'long',
         day: 'numeric',
-        month: 'short',
+        month: 'long',
         year: 'numeric',
       })
     );
@@ -50,20 +47,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen py-4 md:py-8 px-3 md:px-6 flex items-center justify-center relative selection:bg-black selection:text-white">
-      {/* ── 3D Liquid Glass & Silk Ribbon Wallpaper */}
+      {/* ── Fond d'écran 3D Verre Liquide & Rubans de Soie */}
       <div
         className="liquid-glass-background"
         style={{ backgroundImage: `url(${liquidBg})` }}
       />
       <div className="liquid-glass-overlay" />
 
-      {/* ── Master Frosted Glass Window (The Container from the User Mockup) */}
+      {/* ── Fenêtre Maître en Verre Dépoli (Conteneur Liquid Glass) */}
       <div className="liquid-glass-window max-w-[1460px] w-full min-h-[88vh] flex flex-col md:flex-row p-5 md:p-8 gap-6 md:gap-8">
 
-        {/* ── LEFT SIDEBAR ── */}
+        {/* ── BARRE LATÉRALE GAUCHE ── */}
         <aside className="w-full md:w-56 flex-shrink-0 flex flex-col justify-between md:border-r border-slate-300/40 md:pr-6 pb-4 md:pb-0">
           <div className="space-y-6">
-            {/* Logo Brand */}
+            {/* Logo de l'Institution */}
             <div className="flex items-center gap-3 px-1 pt-1">
               <div className="w-9 h-9 rounded-2xl bg-black text-white flex items-center justify-center shadow-md">
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -72,23 +69,23 @@ export default function App() {
               </div>
               <div>
                 <span className="text-base font-black tracking-tight text-slate-900 block leading-tight">
-                  iDraft <span className="text-[10px] text-slate-400 font-semibold">Credit</span>
+                  SFD <span className="text-[10px] text-slate-500 font-bold">CreditRisk</span>
                 </span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
-                  Microfinance SN
+                  Microfinance · Sénégal
                 </span>
               </div>
             </div>
 
-            {/* Primary Navigation */}
+            {/* Menu de Navigation Principal */}
             <nav className="space-y-1.5 pt-2">
-              {NAV_ITEMS.map(({ id, label, Icon }) => {
-                const isActive = activeTab === id;
+              {ELEMENTS_NAVIGATION.map(({ id, label, Icon }) => {
+                const estActif = ongletActif === id;
                 return (
                   <button
                     key={id}
-                    onClick={() => setActiveTab(id)}
-                    className={`sidebar-item w-full ${isActive ? 'active' : ''}`}
+                    onClick={() => setOngletActif(id)}
+                    className={`sidebar-item w-full ${estActif ? 'active' : ''}`}
                   >
                     <Icon size={18} />
                     <span>{label}</span>
@@ -97,35 +94,47 @@ export default function App() {
               })}
             </nav>
 
-            {/* Sub-Section 1: Réseau Agences */}
+            {/* Réseau des Caisses & Mutuelles */}
             <div className="pt-2 hidden md:block">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-3 mb-2">
                 Réseau des Caisses
               </span>
               <div className="space-y-1 text-xs font-semibold text-slate-600 px-3">
-                <div className="flex items-center gap-2 py-1 hover:text-black cursor-pointer">
+                <div
+                  onClick={() => setOngletActif('portefeuille')}
+                  className="flex items-center gap-2 py-1 hover:text-black cursor-pointer"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
                   <span>CEC Plateau</span>
                 </div>
-                <div className="flex items-center gap-2 py-1 hover:text-black cursor-pointer">
+                <div
+                  onClick={() => setOngletActif('portefeuille')}
+                  className="flex items-center gap-2 py-1 hover:text-black cursor-pointer"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                   <span>CEC Banlieue</span>
                 </div>
-                <div className="flex items-center gap-2 py-1 hover:text-black cursor-pointer">
+                <div
+                  onClick={() => setOngletActif('portefeuille')}
+                  className="flex items-center gap-2 py-1 hover:text-black cursor-pointer"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                   <span>MECYD Yoff</span>
                 </div>
-                <div className="flex items-center gap-2 py-1 hover:text-black cursor-pointer">
+                <div
+                  onClick={() => setOngletActif('portefeuille')}
+                  className="flex items-center gap-2 py-1 hover:text-black cursor-pointer"
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                   <span>MECREST Thiès</span>
                 </div>
               </div>
             </div>
 
-            {/* Sub-Section 2: Statuts Prudentiels */}
+            {/* Statuts Prudentiels BCEAO */}
             <div className="pt-1 hidden md:block">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-3 mb-2">
-                Statuts Prudentiels
+                Classification BCEAO
               </span>
               <div className="space-y-1 text-xs font-semibold text-slate-600 px-3">
                 <div className="flex items-center gap-2 py-1">
@@ -138,86 +147,90 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-2 py-1">
                   <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span>Défaut (11.9%)</span>
+                  <span>Contentieux (11.9%)</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Footer Settings */}
+          {/* Audit & Paramètres */}
           <div className="pt-4 border-t border-slate-200/50 hidden md:block">
             <button
-              onClick={() => setActiveTab('modele')}
+              onClick={() => setOngletActif('modele')}
               className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-500 hover:text-black transition-colors w-full cursor-pointer"
             >
               <MdSettings size={17} />
-              <span>Audit & Paramètres</span>
+              <span>Audit & Validation</span>
             </button>
           </div>
         </aside>
 
-        {/* ── MAIN CONTENT AREA ── */}
+        {/* ── ZONE DE CONTENU PRINCIPALE ── */}
         <main className="flex-1 flex flex-col gap-6 overflow-hidden">
-          {/* Header Row (Hi, Analyst! + Action buttons) */}
+          {/* Ligne d'En-tête */}
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/30">
             <div>
               <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                Bonjour, Analyste !
+                Plateforme d'Analyse du Risque de Crédit
               </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Portefeuille de Microfinance · {currentDate || 'Octobre 2026'} · 15 188 Prêts
+              <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">
+                {dateCourante || 'Session en cours'} · 15 188 Dossiers de Prêt Réels
               </p>
             </div>
 
-            {/* Right Action Icons & CTA Button */}
+            {/* Boutons d'Action & Profil */}
             <div className="flex items-center gap-3">
-              {/* + Create / + Simuler Pill CTA */}
+              {/* Bouton Pilule Noir CTA */}
               <button
-                onClick={() => setActiveTab('simulateur')}
+                onClick={() => setOngletActif('simulateur')}
                 className="btn-pill-dark"
               >
                 <MdAdd size={16} />
-                <span>+ Nouveau Prêt</span>
+                <span>+ Simuler un Prêt</span>
               </button>
 
-              {/* Circle Search */}
+              {/* Bouton Circulaire de Recherche */}
               <button
-                onClick={() => setActiveTab('portefeuille')}
+                onClick={() => setOngletActif('portefeuille')}
                 className="circle-btn"
-                title="Rechercher un dossier"
+                title="Consulter le registre des crédits"
               >
                 <MdSearch size={18} />
               </button>
 
-              {/* Circle Notifications */}
+              {/* Bouton Circulaire des Notifications */}
               <button
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => setOngletActif('dashboard')}
                 className="circle-btn relative"
-                title="Notifications"
+                title="Alertes réglementaires"
               >
                 <MdNotificationsNone size={18} />
                 <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white" />
               </button>
 
-              {/* Avatar Circle */}
-              <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm flex-shrink-0 cursor-pointer">
-                AN
+              {/* Pastille de Profil Analyste */}
+              <div
+                onClick={() => setOngletActif('modele')}
+                className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm flex-shrink-0 cursor-pointer"
+                title="Profil Analyste Risque"
+              >
+                SFD
               </div>
             </div>
           </header>
 
-          {/* Active View Container */}
+          {/* Conteneur de Vue Dynamique */}
           <div className="flex-1 overflow-y-auto pr-1">
-            {!overview ? (
+            {!vueEnsemble ? (
               <Spinner message="Chargement des données du portefeuille..." />
             ) : (
               <>
-                {activeTab === 'dashboard' && (
-                  <DashboardOverview overview={overview} onNavigate={(tab) => setActiveTab(tab as NavId)} />
+                {ongletActif === 'dashboard' && (
+                  <DashboardOverview overview={vueEnsemble} onNavigate={(tab) => setOngletActif(tab as NavId)} />
                 )}
-                {activeTab === 'portefeuille' && <DonneesPage />}
-                {activeTab === 'modele' && <ModelePage />}
-                {activeTab === 'simulateur' && <PredictionPage />}
+                {ongletActif === 'portefeuille' && <DonneesPage />}
+                {ongletActif === 'modele' && <ModelePage />}
+                {ongletActif === 'simulateur' && <PredictionPage />}
               </>
             )}
           </div>
