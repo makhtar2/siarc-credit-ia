@@ -1,5 +1,7 @@
 # 🏦 SIARC · Système d’Intelligence Artificielle pour l'Évaluation des Risques de Crédit
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/makhtar2/siarc-credit-ia)
+
 > **Système Décisionnel & d'Aide à l'Octroi de Crédit en Microfinance (SFD Sénégal)**  
 > Audit de portefeuille, surveillance prudentielle BCEAO et inférence de Machine Learning sur le jeu de données `DataSet_Credit.xlsx` (15 188 dossiers réels : CEC Plateau, CEC Banlieue, MECYD Yoff, MECREST Thiès, MECZOR Ziguinchor).
 
