@@ -123,6 +123,38 @@
   .sidebar-item.active {
     @apply bg-[#18181B] text-white shadow-md shadow-black/15 font-bold;
   }
+
+  /* ── Libellés de Formulaire ── */
+  .input-label {
+    @apply text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5 select-none;
+  }
+
+  /* ── Sélecteurs de Liste Stylisés (Liquid Glass) ── */
+  .custom-select-wrapper {
+    @apply relative w-full min-w-0;
+  }
+
+  .custom-select {
+    @apply w-full appearance-none bg-white/90 hover:bg-white border border-slate-200/90 hover:border-slate-300
+           rounded-2xl px-4 py-2.5 pr-10 text-xs font-bold text-slate-900 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black
+           transition-all duration-150 cursor-pointer truncate block;
+  }
+
+  /* ── Champs de Saisie Numérique & Texte ── */
+  .custom-input {
+    @apply w-full bg-white/90 hover:bg-white border border-slate-200/90 hover:border-slate-300
+           rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-900 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black
+           transition-all duration-150 [appearance:textfield]
+           [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+  }
+
+  /* ── Sliders de Plage Personnalisés ── */
+  .custom-range {
+    @apply w-full h-1.5 bg-slate-200/90 rounded-full appearance-none cursor-pointer accent-[#18181B]
+           focus:outline-none transition-all;
+  }
 }
 
 /* Animations Fluides */

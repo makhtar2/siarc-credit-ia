@@ -18,6 +18,7 @@ import {
   MdShowChart,
   MdDownload,
   MdRefresh,
+  MdKeyboardArrowDown,
 } from 'react-icons/md';
 import { Card, CardHeader } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
@@ -372,38 +373,50 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
               />
             </div>
 
-            <div>
+            <div className="custom-select-wrapper">
               <select
                 value={filterAgence}
                 onChange={(e) => {
                   setFilterAgence(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+                className="custom-select"
               >
                 <option value="ALL">Toutes les agences</option>
                 {overview.agences.map((ag: any) => (
                   <option key={ag.agence} value={ag.agence}>
-                    {ag.agence}
+                    {ag.agence === 'CEC/PLATEAU'
+                      ? 'CEC Plateau'
+                      : ag.agence === 'CEC_B'
+                      ? 'CEC Banlieue'
+                      : ag.agence === 'MECYD'
+                      ? 'MECYD Yoff'
+                      : ag.agence === 'MECREST'
+                      ? 'MECREST Thiès'
+                      : ag.agence === 'MECZOR'
+                      ? 'MECZOR Ziguinchor'
+                      : ag.agence}
                   </option>
                 ))}
               </select>
+              <MdKeyboardArrowDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
             </div>
 
-            <div>
+            <div className="custom-select-wrapper">
               <select
                 value={filterStatut}
                 onChange={(e) => {
                   setFilterStatut(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+                className="custom-select"
               >
                 <option value="ALL">Tous les statuts</option>
                 <option value="Sain">Sain</option>
                 <option value="Vigilance">Vigilance</option>
                 <option value="Défaut">Défaut</option>
               </select>
+              <MdKeyboardArrowDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
             </div>
           </div>
 

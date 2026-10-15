@@ -16,6 +16,9 @@ import {
   MdSecurity,
   MdLightbulb,
   MdArrowForward,
+  MdKeyboardArrowDown,
+  MdDownload,
+  MdRefresh,
 } from 'react-icons/md';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
@@ -23,7 +26,6 @@ import { StatusBadge } from '../components/ui/Badge';
 import { PageHeader } from '../components/ui/PageHeader';
 import { fetchOptions, predictCredit, PredictPayload } from '../lib/api';
 import { fmt, fmtFCFA, statusColor } from '../lib/utils';
-import { MdDownload, MdRefresh } from 'react-icons/md';
 
 interface PredictionPageProps {
   initialDossier?: any;
@@ -235,45 +237,67 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Agence */}
-                <div>
-                  <label className="input-label flex items-center gap-1.5">
+                <div className="min-w-0">
+                  <label className="input-label">
                     <MdLocationCity className="text-slate-400" /> Agence / Caisse
                   </label>
-                  <select
-                    value={formData.agence}
-                    onChange={(e) => setFormData({ ...formData, agence: e.target.value })}
-                    className="custom-select"
-                  >
-                    {options.agences.map((ag: string) => (
-                      <option key={ag} value={ag}>
-                        {ag}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="custom-select-wrapper">
+                    <select
+                      value={formData.agence}
+                      onChange={(e) => setFormData({ ...formData, agence: e.target.value })}
+                      className="custom-select"
+                      title={formData.agence}
+                    >
+                      {options.agences.map((ag: string) => {
+                        const nomLisible =
+                          ag === 'CEC/PLATEAU'
+                            ? 'CEC Plateau'
+                            : ag === 'CEC_B'
+                            ? 'CEC Banlieue'
+                            : ag === 'MECYD'
+                            ? 'MECYD Yoff'
+                            : ag === 'MECREST'
+                            ? 'MECREST Thiès'
+                            : ag === 'MECZOR'
+                            ? 'MECZOR Ziguinchor'
+                            : ag;
+                        return (
+                          <option key={ag} value={ag}>
+                            {nomLisible}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <MdKeyboardArrowDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                  </div>
                 </div>
 
                 {/* Secteur d'activité */}
-                <div>
-                  <label className="input-label flex items-center gap-1.5">
+                <div className="min-w-0">
+                  <label className="input-label">
                     <MdCategory className="text-slate-400" /> Secteur d'Activité
                   </label>
-                  <select
-                    value={formData.secteur_activite}
-                    onChange={(e) => setFormData({ ...formData, secteur_activite: e.target.value })}
-                    className="custom-select"
-                  >
-                    {options.secteurs.map((sec: string) => (
-                      <option key={sec} value={sec}>
-                        {sec}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="custom-select-wrapper">
+                    <select
+                      value={formData.secteur_activite}
+                      onChange={(e) => setFormData({ ...formData, secteur_activite: e.target.value })}
+                      className="custom-select"
+                      title={formData.secteur_activite}
+                    >
+                      {options.secteurs.map((sec: string) => (
+                        <option key={sec} value={sec}>
+                          {sec}
+                        </option>
+                      ))}
+                    </select>
+                    <MdKeyboardArrowDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                  </div>
                 </div>
               </div>
 
               {/* Type de produit */}
               <div>
-                <label className="input-label flex items-center gap-1.5">
+                <label className="input-label">
                   <MdPayments className="text-slate-400" /> Famille de Financement
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -284,10 +308,10 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                         type="button"
                         key={tg}
                         onClick={() => setFormData({ ...formData, type_groupe: tg })}
-                        className={`px-3 py-2 rounded-full text-xs font-bold border transition-all text-center cursor-pointer ${
+                        className={`px-3 py-2 rounded-2xl text-xs font-bold border transition-all text-center cursor-pointer ${
                           isSelected
                             ? 'bg-[#18181B] text-white border-black shadow-sm'
-                            : 'bg-white/70 text-slate-700 border-slate-200 hover:bg-white'
+                            : 'bg-white/80 text-slate-700 border-slate-200/80 hover:bg-white hover:border-slate-300'
                         }`}
                       >
                         {tg}
@@ -299,64 +323,81 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
 
               {/* Montants */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                <div>
-                  <label className="input-label flex items-center justify-between">
+                <div className="min-w-0">
+                  <label className="input-label justify-between">
                     <span className="flex items-center gap-1.5">
-                      <MdPayments className="text-slate-400" /> Montant Déboursé (FCFA)
+                      <MdPayments className="text-slate-400" /> Montant Déboursé
+                    </span>
+                    <span className="text-[10px] font-mono-num font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full">
+                      {fmt(formData.montant_debourse)} FCFA
                     </span>
                   </label>
-                  <input
-                    type="number"
-                    min={50000}
-                    step={50000}
-                    value={formData.montant_debourse}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        montant_debourse: Number(e.target.value),
-                        solde_credit: Math.min(formData.solde_credit, Number(e.target.value)),
-                      })
-                    }
-                    className="custom-input font-mono-num font-bold"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={50000}
+                      step={50000}
+                      value={formData.montant_debourse}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          montant_debourse: Number(e.target.value),
+                          solde_credit: Math.min(formData.solde_credit, Number(e.target.value)),
+                        })
+                      }
+                      className="custom-input font-mono-num font-bold pr-14"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">
+                      FCFA
+                    </span>
+                  </div>
                   {/* Quick Shortcuts */}
-                  <div className="flex gap-1.5 mt-2">
+                  <div className="flex gap-1.5 mt-2 overflow-x-auto pb-0.5">
                     {[500_000, 1_000_000, 2_000_000, 5_000_000].map((v) => (
                       <button
                         key={v}
                         type="button"
                         onClick={() => handleShortcutMontant(v)}
-                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-[#18181B] hover:text-white text-slate-700 transition-colors cursor-pointer"
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
+                          formData.montant_debourse === v
+                            ? 'bg-[#18181B] text-white shadow-sm'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80 shadow-xs'
+                        }`}
                       >
-                        {v >= 1_000_000 ? `${v / 1_000_000}M` : `${v / 1_000}k`}
+                        {v >= 1_000_000 ? `${v / 1_000_000}M FCFA` : `${v / 1_000}k FCFA`}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <label className="input-label flex items-center justify-between">
+                <div className="min-w-0">
+                  <label className="input-label justify-between">
                     <span className="flex items-center gap-1.5">
-                      <MdAccountBalance className="text-slate-400" /> Solde Restant Dû (FCFA)
+                      <MdAccountBalance className="text-slate-400" /> Solde Restant Dû
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono-num font-normal">
+                    <span className="text-[10px] text-slate-500 font-mono-num font-semibold">
                       {Math.round((formData.solde_credit / (formData.montant_debourse || 1)) * 100)}% restant
                     </span>
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={formData.montant_debourse}
-                    step={25000}
-                    value={formData.solde_credit}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        solde_credit: Number(e.target.value),
-                      })
-                    }
-                    className="custom-input font-mono-num font-bold"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      max={formData.montant_debourse}
+                      step={25000}
+                      value={formData.solde_credit}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          solde_credit: Number(e.target.value),
+                        })
+                      }
+                      className="custom-input font-mono-num font-bold pr-14"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">
+                      FCFA
+                    </span>
+                  </div>
                   <input
                     type="range"
                     min={0}
@@ -369,15 +410,15 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                         solde_credit: Number(e.target.value),
                       })
                     }
-                    className="w-full mt-2 accent-slate-900 cursor-pointer"
+                    className="custom-range mt-3"
                   />
                 </div>
               </div>
 
               {/* Profil Emprunteur */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                <div>
-                  <label className="input-label flex items-center justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="min-w-0 bg-white/60 p-3 rounded-2xl border border-slate-200/70 shadow-xs">
+                  <label className="input-label justify-between">
                     <span className="flex items-center gap-1.5">
                       <MdPerson className="text-slate-400" /> Âge
                     </span>
@@ -389,14 +430,14 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                     max={75}
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })}
-                    className="w-full accent-slate-900 mt-1 cursor-pointer"
+                    className="custom-range mt-1.5"
                   />
                 </div>
 
-                <div>
-                  <label className="input-label flex items-center justify-between">
+                <div className="min-w-0 bg-white/60 p-3 rounded-2xl border border-slate-200/70 shadow-xs">
+                  <label className="input-label justify-between">
                     <span className="flex items-center gap-1.5">
-                      <MdHistory className="text-slate-400" /> Crédits Antérieurs
+                      <MdHistory className="text-slate-400" /> Précédents
                     </span>
                     <span className="font-mono-num text-slate-900 font-bold">{formData.nb_credits_anterieurs}</span>
                   </label>
@@ -408,12 +449,12 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                     onChange={(e) =>
                       setFormData({ ...formData, nb_credits_anterieurs: Number(e.target.value) })
                     }
-                    className="w-full accent-slate-900 mt-1 cursor-pointer"
+                    className="custom-range mt-1.5"
                   />
                 </div>
 
-                <div>
-                  <label className="input-label flex items-center justify-between">
+                <div className="min-w-0 bg-white/60 p-3 rounded-2xl border border-slate-200/70 shadow-xs">
+                  <label className="input-label justify-between">
                     <span className="flex items-center gap-1.5">
                       <MdCalendarMonth className="text-slate-400" /> Mois d'Octroi
                     </span>
@@ -425,7 +466,7 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                     max={12}
                     value={formData.mois_ouverture}
                     onChange={(e) => setFormData({ ...formData, mois_ouverture: Number(e.target.value) })}
-                    className="w-full accent-slate-900 mt-1 cursor-pointer"
+                    className="custom-range mt-1.5"
                   />
                 </div>
               </div>
