@@ -5,6 +5,9 @@
 **Jeu de Données :** `DataSet_Credit.xlsx` (15 189 dossiers de crédits réels)  
 **Institutions concernées :** Mutuelles et Caisses d'Épargne et de Crédit du Sénégal (CEC Plateau, CEC Banlieue, MECYD, MECREST, MECZOR)  
 **Stack Technique :** Python / FastAPI (Backend & ML) + React 18 / TypeScript / Tailwind CSS / Recharts (Frontend UI/UX)  
+**Plateforme Déployée en Ligne :** [https://siarc-credit-ia.onrender.com/](https://siarc-credit-ia.onrender.com/)  
+**Dépôt Officiel GitHub :** [https://github.com/makhtar2/siarc-credit-ia](https://github.com/makhtar2/siarc-credit-ia)  
+**Documentation API Interactive :** [https://siarc-credit-ia.onrender.com/docs](https://siarc-credit-ia.onrender.com/docs)  
 
 ---
 

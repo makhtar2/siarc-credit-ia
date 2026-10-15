@@ -1,5 +1,9 @@
 # 🏦 SIARC · Système d’Intelligence Artificielle pour l'Évaluation des Risques de Crédit
 
+> 🚀 **Démonstration en Ligne Live :** [https://siarc-credit-ia.onrender.com/](https://siarc-credit-ia.onrender.com/)  
+> 📖 **Documentation API Swagger :** [https://siarc-credit-ia.onrender.com/docs](https://siarc-credit-ia.onrender.com/docs)  
+> 🟢 **Statut Instance :** En ligne 24/7 (Monitoring & Cron Anti-Veille actif)
+
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/makhtar2/siarc-credit-ia)
 
 > **Système Décisionnel & d'Aide à l'Octroi de Crédit en Microfinance (SFD Sénégal)**  
