@@ -15,6 +15,7 @@ import { ModelePage } from './pages/ModelePage';
 import { PredictionPage } from './pages/PredictionPage';
 import { fetchOverview } from './lib/api';
 import { Spinner } from './components/ui/Spinner';
+import { LogoBrand } from './components/ui/Logo';
 import liquidBg from './assets/liquid-glass-bg.jpg';
 
 const ELEMENTS_NAVIGATION = [
@@ -61,20 +62,8 @@ export default function App() {
         <aside className="w-full md:w-56 flex-shrink-0 flex flex-col justify-between md:border-r border-slate-300/40 md:pr-6 pb-4 md:pb-0">
           <div className="space-y-6">
             {/* Logo de l'Institution */}
-            <div className="flex items-center gap-3 px-1 pt-1">
-              <div className="w-9 h-9 rounded-2xl bg-black text-white flex items-center justify-center shadow-md">
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-base font-black tracking-tight text-slate-900 block leading-tight">
-                  SFD <span className="text-[10px] text-slate-500 font-bold">CreditRisk</span>
-                </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">
-                  Microfinance · Sénégal
-                </span>
-              </div>
+            <div className="px-1 pt-1">
+              <LogoBrand />
             </div>
 
             {/* Menu de Navigation Principal */}
@@ -171,10 +160,10 @@ export default function App() {
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/30">
             <div>
               <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                Plateforme d'Analyse du Risque de Crédit
+                Plateforme de Pilotage du Risque de Crédit
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">
-                {dateCourante || 'Session en cours'} · 15 188 Dossiers de Prêt Réels
+                {dateCourante || 'Session en cours'} · 15 188 Dossiers Réels SFD Sénégal
               </p>
             </div>
 
@@ -211,10 +200,10 @@ export default function App() {
               {/* Pastille de Profil Analyste */}
               <div
                 onClick={() => setOngletActif('modele')}
-                className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm flex-shrink-0 cursor-pointer"
-                title="Profil Analyste Risque"
+                className="w-10 h-10 rounded-full bg-[#18181B] text-white flex items-center justify-center font-black text-xs ring-2 ring-white/80 shadow-sm flex-shrink-0 cursor-pointer tracking-wider hover:opacity-90 transition-opacity"
+                title="Profil Analyste Risque · WariScore"
               >
-                SFD
+                WS
               </div>
             </div>
           </header>

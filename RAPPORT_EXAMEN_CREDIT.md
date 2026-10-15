@@ -1,25 +1,35 @@
-# 🏦 Rapport de Projet d'Examen : Analyse & Scoring du Risque de Crédit en Microfinance
+# 🏦 WariScore · Rapport de Projet d'Examen
+## Plateforme de Pilotage & Scoring du Risque de Crédit en Microfinance
 
 **Auteur :** Projet d'Examen — Module Data Science & Machine Learning Appliqué  
-**Jeu de Données :** `DataSet_Credit.xlsx` (15 189 dossiers de crédits)  
+**Jeu de Données :** `DataSet_Credit.xlsx` (15 189 dossiers de crédits réels)  
 **Institutions concernées :** Mutuelles et Caisses d'Épargne et de Crédit du Sénégal (CEC Plateau, CEC Banlieue, MECYD, MECREST, MECZOR)  
-**Stack Technique Retenue :** Python / FastAPI (Backend & ML) + React 18 / TypeScript / Tailwind CSS / Recharts (Frontend UI/UX)  
+**Stack Technique :** Python / FastAPI (Backend & ML) + React 18 / TypeScript / Tailwind CSS / Recharts (Frontend UI/UX)  
 
 ---
 
-## 1. Contexte Métier & Enjeux Prudentiels (Régulation BCEAO)
+## 1. Identité de la Plateforme & Enjeux Prudentiels (Régulation BCEAO)
 
+### Dénomination & Identité Visuelle : « WariScore »
+Le nom de la plateforme a été pensé pour rompre avec les dénominations génériques de la tech et s'inscrire dans la réalité locale du terrain sénégalais :
+- **« Wari »** : Terme wolof désignant l'argent, les liquidités et l'avoir monétaire. Il confère à la solution une forte légitimité culturelle auprès des mutuelles et sociétaires du Sénégal.
+- **« Score »** : Référence au moteur actuariel et prudentiel d'évaluation du risque de contrepartie.
+- **Logo Sur-Mesure (`Logo.tsx`)** : Conçu selon un langage géométrique épuré sans fioriture artificielle. Il associe un monogramme stylisé « W » en dégradé d'acier et titane obsidienne, un losange central symbolisant la solidité financière et une pastille émeraude de solvabilité et de conformité aux règles d'émission de crédit de la BCEAO.
+
+### Contexte Réglementaire BCEAO pour les SFD
 Dans le secteur de la microfinance en Afrique de l'Ouest (zone UEMOA), la viabilité des Systèmes Financiers Décentralisés (SFD) repose sur la maîtrise rigoureuse de la qualité de leur portefeuille de prêts.
 
 La principale métrique réglementaire fixée par la BCEAO est le **Portefeuille à Risque (PAR)** :
 - **PAR 30** : Encours des crédits ayant au moins une échéance impayée depuis plus de 30 jours, rapporté à l'encours brut total.
-- **Créances en Souffrance / Douteuses** : Prêts en retard de plus de 90 jours ou 180 jours, nécessitant un provisionnement pour dépréciation.
+- **Créances en Souffrance / Douteuses** : Prêts en retard de plus de 90 jours ou 180 jours, nécessitant un provisionnement pour dépréciation (5% pour 1-30j, 20% pour 31-90j, 50% pour 91-180j, 100% au-delà de 180j).
 
-### Objectif du Projet
-Développer une solution d'aide à la décision en temps réel permettant aux comités de crédit et aux analystes risques de :
-1. **Auditer globalement le portefeuille** d'une mutuelle ou caisse (encours, répartition géographique, secteurs d'activité, tranches d'impayés).
-2. **Prédire le risque de défaillance** à l'octroi ou en cours de vie d'un crédit grâce à un modèle d'apprentissage supervisé performant.
-3. **Fournir un Score de Solvabilité (0 à 100)** et des recommandations d'octroi claires et explicables.
+### Objectifs Opérationnels du Cockpit
+Développer une solution d'aide à la décision en temps réel permettant aux directeurs généraux de caisse, comités de crédit et analystes risques de :
+1. **Piloter en direct le risque par agence** (CEC Plateau, CEC Banlieue, MECYD, MECREST, MECZOR) avec calcul immédiat des provisions réglementaires.
+2. **Suivre les flux financiers réels** selon les cycles mensuels et annuels.
+3. **Traiter en priorité les créances critiques** présentant les expositions en défaut les plus élevées.
+4. **Prédire le risque de défaillance** à l'octroi ou au renouvellement grâce à un classificateur supervisé éprouvé.
+5. **Fournir un Score de Solvabilité (0 à 100)** et un avis motivé d'octroi conforme aux ratios prudentiels.
 
 ---
 
@@ -113,9 +123,12 @@ Plutôt que d'utiliser un outil monolithique standard (type Streamlit) dont les 
 ### Frontend : React 18 + TypeScript + Vite + Tailwind CSS (Design System « Liquid Glass »)
 - **Esthétique « Liquid Glass » & Rubans 3D :** Toile de fond en vagues de soie et verre liquide translucide avec fenêtre principale flottante en verre dépoli (`backdrop-blur-2xl`, bordures en dégradé de blanc translucide et reflets intérieurs).
 - **Cartes Obsidian & Haut Contraste :** Widget principal d'information globale en noir profond (`#18181B`) intégrant des mini-cartes pilules blanches en relief pour les statuts prudentiels.
-- **Visualisations Avancées avec Recharts :** Courbes splines minimalistes pour les flux hebdomadaires et anneaux circulaires concentriques pour le suivi du Portefeuille à Risque (PAR).
-- **Simulateur d'Octroi en Temps Réel :** Jauge de score de solvabilité (0-100), décomposition des probabilités, avis officiel du comité et facteurs d'explicabilité.
-- **Expérience Modulaire :** Navigation fluide via une barre latérale ergonomique avec sélecteurs de réseaux SFD et filtres de risque.
+- **Logo Vectoriel Épuré (`Logo.tsx`) :** Emblème minimaliste intégrant le double chevron « W », le bouclier losangique de garantie et le marqueur émeraude de solvabilité.
+- **Quatre Espaces Métiers Dédiés :**
+  1. **Cockpit Exécutif (`DashboardOverview.tsx`) :** Filtrage dynamique par agence (CEC Plateau, Banlieue, etc.), suivi des flux réels mensuels et annuels, calcul immédiat des provisions réglementaires BCEAO et surveillance des créances critiques.
+  2. **Portefeuille & Registre des Crédits (`DonneesPage.tsx`) :** Indicateurs macro-économiques (16.5 Mds prêtés, 11.6 Mds d'encours), ratios de recouvrement, segmentation sectorielle et base de données paginée et filtrable.
+  3. **Modèle de Risque & Audit (`ModelePage.tsx`) :** Matrice de confusion interactive, importance des variables discriminantes (Gini) et rapport de classification certifié.
+  4. **Simulateur d'Octroi en Temps Réel (`PredictionPage.tsx`) :** Jauge de score de solvabilité (0-100), décomposition probabiliste, avis motivé du comité et analyse des facteurs clés.
 
 ---
 
