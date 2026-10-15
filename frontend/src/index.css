@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 14px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    color: #18181B;
+    background: #D4D4D8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(161, 161, 170, 0.5);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #18181B;
+  }
+
+  .font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── 3D Liquid Glass & Silk Background */
+.liquid-glass-background {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: saturate(105%) brightness(98%);
+  transform: scale(1.02);
+}
+
+.liquid-glass-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, rgba(228, 228, 231, 0.4) 100%);
+  pointer-events: none;
+}
+
+@layer components {
+  /* ── Master Glass Canvas Container (The big rounded frosted glass window) */
+  .liquid-glass-window {
+    @apply bg-white/65 backdrop-blur-2xl border border-white/70 rounded-[36px] md:rounded-[42px]
+           shadow-[0_30px_90px_rgba(0,0,0,0.12),0_4px_16px_rgba(0,0,0,0.04),inset_0_1px_1px_rgba(255,255,255,0.9)]
+           transition-all duration-300;
+  }
+
+  /* ── Liquid Glass White Card */
+  .glass-card-white {
+    @apply bg-white/85 backdrop-blur-md rounded-[26px] border border-white/80 p-5 md:p-6
+           shadow-[0_8px_30px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.9)]
+           transition-all duration-200;
+  }
+  .glass-card-white.hoverable:hover {
+    @apply shadow-[0_14px_40px_rgba(0,0,0,0.08)] -translate-y-0.5 border-white;
+  }
+
+  /* ── Obsidian Dark Card (Exact Match to "Overall Information" in the image) */
+  .glass-card-dark {
+    @apply bg-[#18181B] text-white rounded-[26px] p-5 md:p-6
+           shadow-[0_16px_40px_rgba(24,24,27,0.22),inset_0_1px_1px_rgba(255,255,255,0.1)]
+           transition-all duration-200;
+  }
+
+  /* ── Dashed Action Card (Match "+ Add task" in the image) */
+  .glass-card-dashed {
+    @apply border-2 border-dashed border-slate-300/80 rounded-[26px] bg-white/30 backdrop-blur-sm
+           hover:bg-white/70 hover:border-slate-400 transition-all duration-200 cursor-pointer
+           flex flex-col items-center justify-center p-5 text-center;
+  }
+
+  /* ── Circle Action Buttons (Search, Notification, Share) */
+  .circle-btn {
+    @apply w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-white/90 shadow-sm
+           flex items-center justify-center text-slate-700 hover:text-black hover:bg-white
+           transition-all duration-150 cursor-pointer;
+  }
+
+  /* ── Dark Pill CTA Button (Match "+ Create" in the image) */
+  .btn-pill-dark {
+    @apply bg-[#18181B] hover:bg-black text-white px-5 py-2.5 rounded-full text-xs font-bold
+           shadow-md shadow-black/15 flex items-center gap-2 transition-all duration-150 cursor-pointer;
+  }
+
+  /* ── White Pill Action Button (Match "Download Report" in the image) */
+  .btn-pill-white {
+    @apply bg-white hover:bg-slate-50 text-slate-800 border border-slate-200/80 px-4 py-2 rounded-full text-xs font-bold
+           shadow-sm flex items-center gap-1.5 transition-all duration-150 cursor-pointer;
+  }
+
+  /* ── Sidebar Nav Item */
+  .sidebar-item {
+    @apply px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-3 transition-all duration-150 cursor-pointer select-none text-slate-500 hover:text-slate-900 hover:bg-white/40;
+  }
+  .sidebar-item.active {
+    @apply bg-[#18181B] text-white shadow-md shadow-black/15 font-bold;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
