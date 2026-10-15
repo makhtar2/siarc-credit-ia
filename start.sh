@@ -5,7 +5,7 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "======================================================================"
-echo "🏦  PLATEFORME D'ANALYSE & DE SCORING DU RISQUE DE CRÉDIT (PROJET EXAMEN)"
+echo "🏦  WARISCORE · PILOTAGE & SCORING DU RISQUE DE CRÉDIT (SFD SÉNÉGAL)"
 echo "======================================================================"
 echo "📁 Répertoire projet : $DIR"
 echo ""
