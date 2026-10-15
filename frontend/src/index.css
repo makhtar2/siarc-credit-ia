@@ -152,8 +152,22 @@
 
   /* ── Sliders de Plage Personnalisés ── */
   .custom-range {
-    @apply w-full h-1.5 bg-slate-200/90 rounded-full appearance-none cursor-pointer accent-[#18181B]
+    @apply w-full h-2 bg-slate-200/90 rounded-full appearance-none cursor-pointer accent-[#18181B]
            focus:outline-none transition-all;
+  }
+  .custom-range::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 rounded-full bg-[#18181B] border-2 border-white shadow-md
+           transition-transform duration-150 cursor-pointer;
+  }
+  .custom-range::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+  .custom-range::-moz-range-thumb {
+    @apply w-4 h-4 rounded-full bg-[#18181B] border-2 border-white shadow-md
+           transition-transform duration-150 cursor-pointer;
+  }
+  .custom-range::-moz-range-thumb:hover {
+    transform: scale(1.15);
   }
 }
 

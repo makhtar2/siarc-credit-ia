@@ -24,6 +24,7 @@ import { PredictionPage } from './pages/PredictionPage';
 import { fetchOverview } from './lib/api';
 import { Spinner } from './components/ui/Spinner';
 import { LogoBrand } from './components/ui/Logo';
+import { formatAgence } from './lib/utils';
 import liquidBg from './assets/liquid-glass-bg.jpg';
 
 const ELEMENTS_NAVIGATION = [
@@ -242,11 +243,32 @@ export default function App() {
           {/* Ligne d'En-tête */}
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/30">
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                Plateforme de Pilotage du Risque de Crédit
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                <span>WariScore SFD</span>
+                <span className="text-slate-300">/</span>
+                <span className="text-slate-700">
+                  {ELEMENTS_NAVIGATION.find((e) => e.id === ongletActif)?.label}
+                </span>
+                {selectedAgence !== 'ALL' && (
+                  <>
+                    <span className="text-slate-300">/</span>
+                    <span className="bg-[#18181B] text-white px-2 py-0.5 rounded-full text-[10px] font-mono-num font-bold">
+                      {formatAgence(selectedAgence)}
+                    </span>
+                  </>
+                )}
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 leading-tight">
+                {ongletActif === 'dashboard' && 'Cockpit Prudentiel & Performance du Portefeuille'}
+                {ongletActif === 'portefeuille' && 'Registre des Crédits & Traçabilité des Engagements'}
+                {ongletActif === 'modele' && 'Moteur de Risque & Explicabilité Machine Learning'}
+                {ongletActif === 'simulateur' && "Simulateur d'Octroi & Comité d'Engagement"}
               </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">
-                {dateCourante || 'Session en cours'} · 15 188 Dossiers Réels SFD Sénégal
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                {ongletActif === 'dashboard' && `${dateCourante || 'Session en cours'} · 15 188 Dossiers SFD · Supervision Réglementaire BCEAO`}
+                {ongletActif === 'portefeuille' && 'Base intégrale des 15 188 financements · Filtrage multicritère & Export CSV'}
+                {ongletActif === 'modele' && 'Random Forest (180 estimateurs) · F1-Macro 0.825 · Importances de Gini & Matrice de Confusion'}
+                {ongletActif === 'simulateur' && "Arbitrage instantané d'octroi · Matrice de confusion et calcul des provisions réglementaires"}
               </p>
             </div>
 

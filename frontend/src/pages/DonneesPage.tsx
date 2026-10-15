@@ -26,7 +26,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { Spinner } from '../components/ui/Spinner';
 import { StatusBadge, TagBadge } from '../components/ui/Badge';
 import { fetchOverview, fetchCredits } from '../lib/api';
-import { fmt, statusColor, C } from '../lib/utils';
+import { fmt, statusColor, C, formatAgence } from '../lib/utils';
 
 const ChartTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -137,7 +137,7 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
   ];
 
   const agencesChartData = overview.agences.map((ag: any) => ({
-    name: ag.agence,
+    name: formatAgence(ag.agence),
     credits: ag.total_credits,
     solde: Math.round(ag.solde_restant / 1_000_000),
     taux_defaut: ag.taux_defaut,
@@ -385,17 +385,7 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
                 <option value="ALL">Toutes les agences</option>
                 {overview.agences.map((ag: any) => (
                   <option key={ag.agence} value={ag.agence}>
-                    {ag.agence === 'CEC/PLATEAU'
-                      ? 'CEC Plateau'
-                      : ag.agence === 'CEC_B'
-                      ? 'CEC Banlieue'
-                      : ag.agence === 'MECYD'
-                      ? 'MECYD Yoff'
-                      : ag.agence === 'MECREST'
-                      ? 'MECREST Thiès'
-                      : ag.agence === 'MECZOR'
-                      ? 'MECZOR Ziguinchor'
-                      : ag.agence}
+                    {formatAgence(ag.agence)}
                   </option>
                 ))}
               </select>
@@ -468,7 +458,7 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
                       ID {credit.numero_membre}
                     </td>
                     <td className="py-2.5 px-3">
-                      <span className="font-semibold text-slate-900">{credit.agence}</span>
+                      <span className="font-semibold text-slate-900">{formatAgence(credit.agence)}</span>
                     </td>
                     <td className="py-2.5 px-3 max-w-[140px] truncate" title={credit.secteur_activite}>
                       {credit.secteur_activite}

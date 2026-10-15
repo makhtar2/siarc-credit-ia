@@ -18,7 +18,7 @@ import {
   MdAccountBalance,
   MdCalculate,
 } from 'react-icons/md';
-import { fmt, fmtFCFA } from '../lib/utils';
+import { fmt, fmtFCFA, formatAgence } from '../lib/utils';
 import { fetchOverview } from '../lib/api';
 
 interface DashboardOverviewProps {
@@ -137,7 +137,7 @@ ${(data.dossiers_prioritaires || [])
               Périmètre d'Analyse
             </span>
             <span className="text-xs font-black text-slate-900">
-              {selectedAgence === 'ALL' ? 'Portefeuille Global (5 Caisses Réunies)' : `Caisse locale : ${selectedAgence}`}
+              {selectedAgence === 'ALL' ? 'Portefeuille Global (5 Caisses Réunies)' : `Caisse locale : ${formatAgence(selectedAgence)}`}
             </span>
           </div>
         </div>
@@ -164,7 +164,7 @@ ${(data.dossiers_prioritaires || [])
                   : 'bg-white/80 text-slate-600 hover:bg-white hover:text-black border border-slate-200/60'
               }`}
             >
-              {ag.agence}
+              {formatAgence(ag.agence)}
             </button>
           ))}
         </div>
@@ -557,7 +557,7 @@ ${(data.dossiers_prioritaires || [])
                       #{dossier.numero_credit}
                     </span>
                     <span className="text-[10px] font-bold text-slate-400">
-                      {dossier.agence}
+                      {formatAgence(dossier.agence)}
                     </span>
                   </div>
 
@@ -636,7 +636,7 @@ ${(data.dossiers_prioritaires || [])
             >
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-xs font-black ${selectedAgence === ag.agence ? 'text-white' : 'text-slate-900'}`}>
-                  {ag.agence}
+                  {formatAgence(ag.agence)}
                 </span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   ag.taux_defaut > 15

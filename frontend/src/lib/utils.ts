@@ -89,3 +89,24 @@ export function statusBorderColor(status: string): string {
       return '#E4E4E7';
   }
 }
+
+export function formatAgence(code: string | null | undefined): string {
+  if (!code) return '';
+  switch (code) {
+    case 'CEC/PLATEAU':
+      return 'CEC Plateau';
+    case 'CEC_B':
+      return 'CEC Banlieue';
+    case 'MECYD':
+      return 'MECYD Yoff';
+    case 'MECREST':
+      return 'MECREST Thiès';
+    case 'MECZOR':
+      return 'MECZOR Ziguinchor';
+    case 'ALL':
+      return 'Toutes les Caisses';
+    default:
+      return code;
+  }
+}
+

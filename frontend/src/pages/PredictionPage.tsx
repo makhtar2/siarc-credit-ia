@@ -25,7 +25,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { StatusBadge } from '../components/ui/Badge';
 import { PageHeader } from '../components/ui/PageHeader';
 import { fetchOptions, predictCredit, PredictPayload } from '../lib/api';
-import { fmt, fmtFCFA, statusColor } from '../lib/utils';
+import { fmt, fmtFCFA, statusColor, formatAgence } from '../lib/utils';
 
 interface PredictionPageProps {
   initialDossier?: any;
@@ -56,12 +56,23 @@ export function PredictionPage({ initialDossier, onClearPrefill }: PredictionPag
       .then((opts) => {
         setOptions(opts);
         if (!initialDossier) {
-          setFormData((prev) => ({
-            ...prev,
+          const initData: PredictPayload = {
             agence: opts.agences[0] || 'CEC_B',
             secteur_activite: opts.secteurs[0] || 'COMMERCE',
             type_groupe: opts.types_groupe[0] || 'Trésorerie',
-          }));
+            annee_ouverture: 2026,
+            mois_ouverture: 6,
+            age: 45,
+            nb_credits_anterieurs: 3,
+            montant_debourse: 1_000_000,
+            solde_credit: 350_000,
+          };
+          setFormData(initData);
+          setLoading(true);
+          predictCredit(initData)
+            .then(setResult)
+            .catch(console.error)
+            .finally(() => setLoading(false));
         }
       })
       .catch(console.error);
@@ -113,11 +124,10 @@ export function PredictionPage({ initialDossier, onClearPrefill }: PredictionPag
   };
 
   const handleResetSimulation = () => {
-    setResult(null);
     setImportedCredit(null);
     if (onClearPrefill) onClearPrefill();
     if (options) {
-      setFormData({
+      const resetData: PredictPayload = {
         agence: options.agences[0] || 'CEC_B',
         secteur_activite: options.secteurs[0] || 'COMMERCE',
         type_groupe: options.types_groupe[0] || 'Trésorerie',
@@ -127,7 +137,13 @@ export function PredictionPage({ initialDossier, onClearPrefill }: PredictionPag
         nb_credits_anterieurs: 3,
         montant_debourse: 1_000_000,
         solde_credit: 350_000,
-      });
+      };
+      setFormData(resetData);
+      setLoading(true);
+      predictCredit(resetData)
+        .then(setResult)
+        .catch(console.error)
+        .finally(() => setLoading(false));
     }
   };
 
@@ -197,6 +213,30 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
         accent="& Scoring Crédit"
         subtitle="Aide à la décision en temps réel pour le comité d'engagement et de gestion du risque"
         badge="Scoring Temps Réel"
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetSimulation}
+              className="btn-pill-white text-xs cursor-pointer shadow-sm hover:shadow transition-all"
+              title="Réinitialiser les paramètres du dossier"
+            >
+              <MdRefresh size={15} />
+              <span>Réinitialiser</span>
+            </button>
+            {result && (
+              <button
+                type="button"
+                onClick={handleExportAvis}
+                className="btn-pill-dark text-xs cursor-pointer shadow-sm hover:shadow transition-all"
+                title="Télécharger l'avis officiel du comité en Markdown"
+              >
+                <MdDownload size={15} />
+                <span>Exporter l'Avis</span>
+              </button>
+            )}
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -248,25 +288,11 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                       className="custom-select"
                       title={formData.agence}
                     >
-                      {options.agences.map((ag: string) => {
-                        const nomLisible =
-                          ag === 'CEC/PLATEAU'
-                            ? 'CEC Plateau'
-                            : ag === 'CEC_B'
-                            ? 'CEC Banlieue'
-                            : ag === 'MECYD'
-                            ? 'MECYD Yoff'
-                            : ag === 'MECREST'
-                            ? 'MECREST Thiès'
-                            : ag === 'MECZOR'
-                            ? 'MECZOR Ziguinchor'
-                            : ag;
-                        return (
-                          <option key={ag} value={ag}>
-                            {nomLisible}
-                          </option>
-                        );
-                      })}
+                      {options.agences.map((ag: string) => (
+                        <option key={ag} value={ag}>
+                          {formatAgence(ag)}
+                        </option>
+                      ))}
                     </select>
                     <MdKeyboardArrowDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
                   </div>
@@ -411,6 +437,36 @@ ${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.de
                       })
                     }
                     className="custom-range mt-3"
+                  />
+                </div>
+              </div>
+
+              {/* Jauge d'Amortissement Dynamique du Capital */}
+              <div className="p-3.5 bg-white/70 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] font-bold gap-1">
+                  <span className="text-emerald-700 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                    Capital Amorti : {fmt(Math.max(0, formData.montant_debourse - formData.solde_credit))} FCFA ({Math.round(Math.max(0, (1 - formData.solde_credit / (formData.montant_debourse || 1)) * 100))}%)
+                  </span>
+                  <span className="text-slate-900 font-mono-num flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#18181B] flex-shrink-0" />
+                    Encours Dû : {fmt(formData.solde_credit)} FCFA ({Math.round((formData.solde_credit / (formData.montant_debourse || 1)) * 100)}%)
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-200/80 overflow-hidden flex shadow-inner">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-200"
+                    style={{
+                      width: `${Math.max(0, Math.min(100, Math.round((1 - formData.solde_credit / (formData.montant_debourse || 1)) * 100)))}%`
+                    }}
+                    title="Partie du capital déjà remboursée"
+                  />
+                  <div
+                    className="h-full bg-[#18181B] transition-all duration-200"
+                    style={{
+                      width: `${Math.max(0, Math.min(100, Math.round((formData.solde_credit / (formData.montant_debourse || 1)) * 100)))}%`
+                    }}
+                    title="Solde restant dû"
                   />
                 </div>
               </div>
