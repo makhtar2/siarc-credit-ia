@@ -23,9 +23,11 @@ app.add_middleware(
 )
 
 
-# ────────────────────────────────────── GET /healthz & /api/ping (Keep-Alive Cron)
+# ────────────────────────────────────── GET & HEAD /healthz & /api/ping (Keep-Alive Cron)
 @app.get("/healthz")
+@app.head("/healthz")
 @app.get("/api/ping")
+@app.head("/api/ping")
 def ping_health():
     return {"status": "ok", "app": "SIARC", "alive": True}
 
