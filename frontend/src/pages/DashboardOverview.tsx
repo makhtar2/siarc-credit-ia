@@ -1,189 +1,263 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, CartesianGrid
 } from 'recharts';
 import {
   MdShare,
-  MdMoreHoriz,
   MdDownload,
-  MdNotificationsNone,
+  MdCheckCircle,
+  MdWarningAmber,
+  MdErrorOutline,
   MdAdd,
-  MdEdit,
-  MdCheck,
   MdShowChart,
   MdArrowForward,
+  MdFilterList,
+  MdSecurity,
+  MdAssessment,
+  MdAccountBalance,
+  MdCalculate,
 } from 'react-icons/md';
-import { fmt } from '../lib/utils';
+import { fmt, fmtFCFA } from '../lib/utils';
+import { fetchOverview } from '../lib/api';
 
 interface DashboardOverviewProps {
   overview: any;
-  onNavigate: (tabId: string) => void;
+  onNavigate: (tabId: string, prefill?: any) => void;
 }
 
-const DONNEES_HEBDOMADAIRES = [
-  { name: 'L', debourse: 42, amorti: 32 },
-  { name: 'M', debourse: 65, amorti: 48 },
-  { name: 'M', debourse: 58, amorti: 45 },
-  { name: 'J', debourse: 72, amorti: 56 },
-  { name: 'V', debourse: 85, amorti: 68 },
-  { name: 'S', debourse: 98, amorti: 78 },
-  { name: 'D', debourse: 74, amorti: 62 },
-];
+export function DashboardOverview({ overview: initialOverview, onNavigate }: DashboardOverviewProps) {
+  const [data, setData] = useState<any>(initialOverview);
+  const [selectedAgence, setSelectedAgence] = useState<string>('ALL');
+  const [fluxMode, setFluxMode] = useState<'mensuel' | 'annuel'>('mensuel');
+  const [loading, setLoading] = useState(false);
 
-export function DashboardOverview({ overview, onNavigate }: DashboardOverviewProps) {
-  const [objectifs, setObjectifs] = useState([
-    { id: 1, titre: 'Taux de recouvrement > 80%', detail: 'Réalisé à 83.5%', valide: true },
-    { id: 2, titre: 'Seuil PAR 30 sous les 10%', detail: 'Actuel: 16.5% (Vigilance)', valide: false },
-    { id: 3, titre: 'Provisionnement des créances douteuses', detail: 'Conforme BCEAO', valide: true },
-    { id: 4, titre: 'Audit des crédits commerciaux', detail: 'En cours de revue', valide: false },
-  ]);
+  useEffect(() => {
+    setData(initialOverview);
+  }, [initialOverview]);
 
-  const toggleObjectif = (id: number) => {
-    setObjectifs((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, valide: !o.valide } : o))
-    );
+  const handleAgenceChange = async (ag: string) => {
+    setSelectedAgence(ag);
+    setLoading(true);
+    try {
+      const updated = await fetchOverview(ag);
+      setData(updated);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const nombreValides = objectifs.filter((o) => o.valide).length;
+  if (!data) return null;
+
+  const chartData = fluxMode === 'mensuel' ? data.flux_mensuels : data.flux_annuels;
+  const xKey = fluxMode === 'mensuel' ? 'mois' : 'annee';
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── LIGNE 1 : 3 Cartes Principales (Style Liquid Glass & Obsidian) */}
+      {/* ── BARRE DE CONTRÔLE OPÉRATIONNELLE DU DASHBOARD ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-[#18181B] text-white flex items-center justify-center text-sm shadow-sm">
+            <MdFilterList />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Périmètre d'Analyse
+            </span>
+            <span className="text-xs font-black text-slate-900">
+              {selectedAgence === 'ALL' ? 'Portefeuille Global (5 Caisses Réunies)' : `Caisse locale : ${selectedAgence}`}
+            </span>
+          </div>
+        </div>
+
+        {/* Sélecteur de Caisses / Agences Interactif */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <button
+            onClick={() => handleAgenceChange('ALL')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              selectedAgence === 'ALL'
+                ? 'bg-[#18181B] text-white shadow-sm'
+                : 'bg-white/80 text-slate-600 hover:bg-white hover:text-black border border-slate-200/60'
+            }`}
+          >
+            Toutes les Caisses
+          </button>
+          {data.agences?.map((ag: any) => (
+            <button
+              key={ag.agence}
+              onClick={() => handleAgenceChange(ag.agence)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedAgence === ag.agence
+                  ? 'bg-[#18181B] text-white shadow-sm'
+                  : 'bg-white/80 text-slate-600 hover:bg-white hover:text-black border border-slate-200/60'
+              }`}
+            >
+              {ag.agence}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── LIGNE 1 : 3 CARTES MAÎTRESSES LIQUID GLASS & OBSIDIAN ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-        {/* 1. Vue d'ensemble du Portefeuille (Carte Sombre Obsidian) */}
+        {/* 1. Carte Sombre Obsidian : Portefeuille sous gestion */}
         <div className="lg:col-span-4 glass-card-dark flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold tracking-tight text-white">
-                Vue d'Ensemble du Portefeuille
-              </h3>
-              <div className="flex items-center gap-2 text-slate-400">
-                <button
-                  onClick={() => onNavigate('portefeuille')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                  title="Voir le registre complet"
-                >
-                  <MdShare size={16} />
-                </button>
-                <button
-                  onClick={() => onNavigate('modele')}
-                  className="hover:text-white transition-colors cursor-pointer"
-                  title="Voir les métriques du modèle"
-                >
-                  <MdMoreHoriz size={18} />
-                </button>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <h3 className="text-sm font-bold tracking-tight text-white">
+                  Portefeuille Sous Gestion
+                </h3>
               </div>
+              <button
+                onClick={() => onNavigate('portefeuille')}
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer text-xs font-semibold flex items-center gap-1"
+                title="Consulter le registre"
+              >
+                <span>Détails</span>
+                <MdArrowForward size={14} />
+              </button>
             </div>
 
-            <div className="flex items-baseline gap-6 mb-6">
+            <div className="flex items-baseline gap-6 mb-5">
               <div>
-                <span className="text-3xl font-black font-mono-num text-white tracking-tight">
-                  {fmt(overview.total_credits)}
+                <span className="text-2xl sm:text-3xl font-black font-mono-num text-white tracking-tight">
+                  {fmt(Math.round(data.total_solde / 1_000_000))} M
                 </span>
                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                  Dossiers de crédit au total
+                  Encours Restant Dû (FCFA)
                 </p>
               </div>
 
               <div>
-                <span className="text-3xl font-black font-mono-num text-white tracking-tight">
-                  {fmt(overview.statut_counts.Défaut)}
+                <span className="text-2xl sm:text-3xl font-black font-mono-num text-slate-300 tracking-tight">
+                  {fmt(data.total_credits)}
                 </span>
                 <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                  Dossiers en contentieux
+                  Prêts Actifs Réels
                 </p>
               </div>
             </div>
           </div>
 
-          {/* 3 Cartes Pilules Blanches en Relief */}
-          <div className="grid grid-cols-3 gap-2.5 pt-2">
+          {/* 3 Cartes Pilules Blanches en Relief avec Volumétrie Réelle */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
             {/* Sains */}
-            <div className="bg-white rounded-2xl p-2.5 text-center text-slate-900 shadow-sm flex flex-col items-center">
+            <div className="bg-white rounded-2xl p-2.5 text-center text-slate-900 shadow-sm flex flex-col items-center justify-between">
               <div className="w-5 h-5 rounded-full border-2 border-emerald-500 flex items-center justify-center mb-1">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </div>
-              <span className="text-base font-black font-mono-num leading-tight">
-                {fmt(overview.statut_counts.Sain)}
+              <span className="text-sm font-black font-mono-num leading-tight">
+                {fmt(data.statut_counts?.Sain || 0)}
               </span>
-              <span className="text-[10px] font-bold text-slate-500 mt-0.5">
-                Sains
+              <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                {data.taux_sain}% Sains
               </span>
             </div>
 
             {/* Vigilance */}
-            <div className="bg-white rounded-2xl p-2.5 text-center text-slate-900 shadow-sm flex flex-col items-center">
+            <div className="bg-white rounded-2xl p-2.5 text-center text-slate-900 shadow-sm flex flex-col items-center justify-between">
               <div className="w-5 h-5 rounded-full border-2 border-dashed border-amber-500 flex items-center justify-center mb-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
               </div>
-              <span className="text-base font-black font-mono-num leading-tight">
-                {fmt(overview.statut_counts.Vigilance)}
+              <span className="text-sm font-black font-mono-num leading-tight">
+                {fmt(data.statut_counts?.Vigilance || 0)}
               </span>
-              <span className="text-[10px] font-bold text-slate-500 mt-0.5">
-                Vigilance
+              <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                {data.taux_vigilance}% Vig.
               </span>
             </div>
 
-            {/* Défaut */}
-            <div className="bg-white rounded-2xl p-2.5 text-center text-slate-900 shadow-sm flex flex-col items-center">
+            {/* Contentieux */}
+            <div className="bg-white rounded-2xl p-2.5 text-center text-slate-900 shadow-sm flex flex-col items-center justify-between">
               <div className="w-5 h-5 rounded-full border-2 border-rose-500 flex items-center justify-center mb-1">
-                <div className="w-2 h-2 rounded-full bg-rose-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
               </div>
-              <span className="text-base font-black font-mono-num leading-tight">
-                {fmt(overview.statut_counts.Défaut)}
+              <span className="text-sm font-black font-mono-num leading-tight text-rose-700">
+                {fmt(data.statut_counts?.Défaut || 0)}
               </span>
-              <span className="text-[10px] font-bold text-slate-500 mt-0.5">
-                Contentieux
+              <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                {data.taux_defaut}% Défaut
               </span>
             </div>
           </div>
         </div>
 
-        {/* 2. Flux Hebdomadaires (Courbe Spline Monomatière) */}
+        {/* 2. Flux Financiers Réels Déboursé vs Amorti (Graphique Interactif) */}
         <div className="lg:col-span-4 glass-card-white flex flex-col justify-between">
           <div className="flex items-start justify-between mb-2">
             <div>
               <h3 className="text-sm font-bold tracking-tight text-slate-900">
-                Flux Hebdomadaires
+                Flux de Financement Réels
               </h3>
               <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mt-1">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-900" /> Déboursé
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#18181B]" /> Déboursé
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-400" /> Amorti
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Amorti
                 </span>
               </div>
             </div>
 
-            <span className="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-full shadow-sm">
-              +24%
-            </span>
+            {/* Toggle Mois / Année */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
+              <button
+                onClick={() => setFluxMode('mensuel')}
+                className={`px-2 py-0.5 rounded-md transition-colors ${
+                  fluxMode === 'mensuel' ? 'bg-white text-black shadow-sm' : 'text-slate-500'
+                }`}
+              >
+                Mois
+              </button>
+              <button
+                onClick={() => setFluxMode('annuel')}
+                className={`px-2 py-0.5 rounded-md transition-colors ${
+                  fluxMode === 'annuel' ? 'bg-white text-black shadow-sm' : 'text-slate-500'
+                }`}
+              >
+                Année
+              </button>
+            </div>
           </div>
 
-          <div className="h-40 w-full pt-2">
+          <div className="h-44 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={DONNEES_HEBDOMADAIRES} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="gradientBlack" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#18181B" stopOpacity={0.15} />
+                  <linearGradient id="fluxGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#18181B" stopOpacity={0.18} />
                     <stop offset="95%" stopColor="#18181B" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis
-                  dataKey="name"
+                  dataKey={xKey}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 11, fontWeight: 700, fill: '#71717A' }}
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#71717A' }}
                 />
-                <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 9, fill: '#A1A1AA' }}
+                  tickFormatter={(v) => `${v}M`}
+                />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null;
+                    const d = payload[0].payload;
                     return (
-                      <div className="bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl shadow-lg border border-slate-700">
-                        Flux : {payload[0].value}M FCFA
+                      <div className="bg-[#18181B] text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-xl border border-slate-700">
+                        <p className="font-bold text-white mb-1">
+                          {fluxMode === 'mensuel' ? `Mois : ${d.mois}` : `Année : ${d.annee}`}
+                        </p>
+                        <p className="text-slate-300">Déboursé : {d.debourse} M FCFA</p>
+                        <p className="text-slate-400">Solde restant : {d.solde} M FCFA</p>
+                        <p className="text-slate-400">Dossiers : {d.credits} crédits</p>
                       </div>
                     );
                   }}
@@ -194,7 +268,7 @@ export function DashboardOverview({ overview, onNavigate }: DashboardOverviewPro
                   stroke="#18181B"
                   strokeWidth={2.5}
                   fillOpacity={1}
-                  fill="url(#gradientBlack)"
+                  fill="url(#fluxGradient)"
                 />
                 <Area
                   type="monotone"
@@ -209,318 +283,317 @@ export function DashboardOverview({ overview, onNavigate }: DashboardOverviewPro
           </div>
         </div>
 
-        {/* 3. Qualité Prudentielle & PAR (Jauge Concentrique & Téléchargement) */}
+        {/* 3. Qualité Prudentielle & Provisions BCEAO */}
         <div className="lg:col-span-4 glass-card-white flex flex-col justify-between">
           <div className="flex items-start justify-between mb-1">
             <div>
               <h3 className="text-sm font-bold tracking-tight text-slate-900">
-                Qualité du Portefeuille & PAR
+                Portefeuille à Risque (PAR)
               </h3>
               <p className="text-[11px] text-slate-500 font-medium">
-                Conforme aux exigences réglementaires BCEAO
+                Normes prudentielles UEMOA / BCEAO
               </p>
             </div>
-            <MdShowChart className="text-slate-500 text-lg" />
+            <MdSecurity className="text-slate-700 text-lg" />
           </div>
 
-          {/* Anneaux Concentriques */}
+          {/* Anneaux Concentriques & Provisions */}
           <div className="flex items-center justify-between py-2">
             <div className="space-y-1.5 text-xs font-semibold text-slate-700">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
-                <span>Sains ({overview.taux_sain}%)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#18181B]" />
+                <span>Sains ({data.taux_sain}%)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-                <span>Vigilance ({overview.taux_vigilance}%)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span>PAR 30-90j ({data.taux_vigilance}%)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                <span>Défaut ({overview.taux_defaut}%)</span>
+                <span>Défaut &gt;90j ({data.taux_defaut}%)</span>
               </div>
             </div>
 
             {/* Jauge Circulaire */}
             <div className="relative w-28 h-28 flex items-center justify-center">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                {/* Anneau Extérieur (Sain 83.5%) */}
+                {/* Anneau Sain */}
                 <circle cx="50" cy="50" r="42" stroke="#E4E4E7" strokeWidth="6" fill="transparent" />
                 <circle
                   cx="50" cy="50" r="42"
                   stroke="#18181B" strokeWidth="6" fill="transparent"
                   strokeDasharray="264"
-                  strokeDashoffset={264 - (264 * overview.taux_sain) / 100}
+                  strokeDashoffset={264 - (264 * data.taux_sain) / 100}
                   strokeLinecap="round"
                 />
-                {/* Anneau Médian (Vigilance) */}
+                {/* Anneau Vigilance */}
                 <circle cx="50" cy="50" r="32" stroke="#F4F4F5" strokeWidth="5" fill="transparent" />
                 <circle
                   cx="50" cy="50" r="32"
-                  stroke="#A1A1AA" strokeWidth="5" fill="transparent"
+                  stroke="#F59E0B" strokeWidth="5" fill="transparent"
                   strokeDasharray="201"
-                  strokeDashoffset={201 - (201 * (overview.taux_vigilance * 5)) / 100}
+                  strokeDashoffset={201 - (201 * Math.min(100, data.taux_vigilance * 5)) / 100}
                   strokeLinecap="round"
                 />
-                {/* Anneau Intérieur (Défaut) */}
+                {/* Anneau Défaut */}
                 <circle cx="50" cy="50" r="23" stroke="#F4F4F5" strokeWidth="4.5" fill="transparent" />
                 <circle
                   cx="50" cy="50" r="23"
                   stroke="#EF4444" strokeWidth="4.5" fill="transparent"
                   strokeDasharray="144"
-                  strokeDashoffset={144 - (144 * (overview.taux_defaut * 3)) / 100}
+                  strokeDashoffset={144 - (144 * Math.min(100, data.taux_defaut * 3)) / 100}
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-sm font-black font-mono-num text-slate-900 leading-none">
-                  {overview.taux_sain}%
+                  {data.par_30}%
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">Sains</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">PAR 30</span>
               </div>
             </div>
           </div>
 
-          {/* Ligne d'action */}
-          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-            <button
-              onClick={() => onNavigate('portefeuille')}
-              className="circle-btn !w-9 !h-9 text-slate-700"
-              title="Consulter les détails du portefeuille"
-            >
-              <MdShare size={15} />
-            </button>
+          {/* Provisions Requises & Téléchargement */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase block">Provisions Requises</span>
+              <span className="text-xs font-black font-mono-num text-rose-700">
+                {fmt(Math.round(data.provisions_bceao / 1_000_000))} M FCFA
+              </span>
+            </div>
+
             <a
               href="/RAPPORT_EXAMEN_CREDIT.md"
               target="_blank"
               rel="noreferrer"
-              className="btn-pill-white flex-1 justify-center !py-2 text-slate-800"
+              className="btn-pill-white !py-1.5 !px-3 text-xs"
             >
-              <MdDownload size={15} />
-              <span>Télécharger le Rapport</span>
+              <MdDownload size={14} />
+              <span>Rapport d'Audit</span>
             </a>
           </div>
         </div>
       </div>
 
-      {/* ── LIGNE 2 : Objectifs Réglementaires + Dossiers sous surveillance + Simulation */}
+      {/* ── LIGNE 2 : OBJECTIFS PRUDENTIELS + TOP CRÉANCES EN CONTENTIEUX REELLES ── */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
 
-        {/* 1. Objectifs Réglementaires */}
-        <div className="md:col-span-4 glass-card-white flex flex-col justify-between">
+        {/* 1. Objectifs Prudentiels & Indicateurs BCEAO */}
+        <div className="md:col-span-5 glass-card-white flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
+                <MdAssessment className="text-slate-800 text-lg" />
                 <h3 className="text-sm font-bold tracking-tight text-slate-900">
-                  Objectifs Réglementaires :
+                  Ratios Prudentiels BCEAO
                 </h3>
-                <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">
-                  {nombreValides}/{objectifs.length}
-                </span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono-num">
+                {data.annee_max}
+              </span>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              {/* Ratio 1 : Amortissement */}
+              <div className="p-3 rounded-xl bg-white/60 border border-slate-200/60 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block">Taux d'Amortissement du Capital</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Part de capital déjà recouvrée</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black font-mono-num text-emerald-700 block">
+                    {data.taux_remboursement_moyen}%
+                  </span>
+                  <span className="text-[9px] font-bold text-emerald-800 uppercase">Solvable</span>
+                </div>
+              </div>
+
+              {/* Ratio 2 : Ratio NPL (PAR 30) */}
+              <div className="p-3 rounded-xl bg-white/60 border border-slate-200/60 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block">Portefeuille à Risque (PAR 30)</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Seuil d'alerte réglementaire &lt; 5%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black font-mono-num text-amber-700 block">
+                    {data.par_30}%
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-800 uppercase">Sous Surveillance</span>
+                </div>
+              </div>
+
+              {/* Ratio 3 : Encours sous risque critique */}
+              <div className="p-3 rounded-xl bg-white/60 border border-slate-200/60 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block">Encours en Défaut (&gt;90 jours)</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Capital en risque de perte avérée</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black font-mono-num text-rose-700 block">
+                    {fmt(Math.round(data.encours_defaut / 1_000_000))} M FCFA
+                  </span>
+                  <span className="text-[9px] font-bold text-rose-800 uppercase">{data.statut_counts?.Défaut} crédits</span>
+                </div>
+              </div>
+
+              {/* Ratio 4 : Ticket moyen */}
+              <div className="p-3 rounded-xl bg-white/60 border border-slate-200/60 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 block">Montant Moyen Déboursé</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Moyenne par dossier financé</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black font-mono-num text-slate-900 block">
+                    {fmt(data.montant_moyen_debourse)} F
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">Microfinance</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Top Créances en Contentieux Réelles (Action Immédiate de Recouvrement) */}
+        <div className="md:col-span-7 glass-card-white flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold tracking-tight text-slate-900">
+                  Dossiers Prioritaires à Recouvrer
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Plus fortes expositions en souffrance extraites du dataset
+                </p>
               </div>
               <button
                 onClick={() => onNavigate('portefeuille')}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
-                title="Modifier les critères d'évaluation"
+                className="text-xs font-bold text-slate-900 hover:text-black flex items-center gap-1 cursor-pointer"
               >
-                <MdEdit size={15} />
+                Voir registre <MdArrowForward size={14} />
               </button>
             </div>
 
-            <div className="space-y-2.5">
-              {objectifs.map((o) => (
+            {/* Grille des plus grandes défaillances réelles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {data.dossiers_prioritaires?.slice(0, 4).map((dossier: any) => (
                 <div
-                  key={o.id}
-                  onClick={() => toggleObjectif(o.id)}
-                  className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer select-none"
+                  key={dossier.numero_credit}
+                  className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
                 >
-                  <div
-                    className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center transition-all ${
-                      o.valide
-                        ? 'bg-slate-900 text-white'
-                        : 'border border-slate-300 bg-white'
-                    }`}
-                  >
-                    {o.valide && <MdCheck size={12} />}
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 font-mono-num text-[11px] font-bold border border-rose-200/80">
+                      #{dossier.numero_credit}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {dossier.agence}
+                    </span>
                   </div>
+
                   <div>
-                    <p className={`text-xs font-semibold leading-tight ${o.valide ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                      {o.titre}
-                    </p>
-                    <span className="text-[10px] text-slate-400 font-medium">{o.detail}</span>
+                    <span className="text-xs font-black text-slate-900 font-mono-num block">
+                      {fmt(dossier.solde_credit)} FCFA
+                    </span>
+                    <span className="text-[11px] text-slate-500 truncate block mt-0.5 font-medium">
+                      {dossier.secteur} · {dossier.type_groupe}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                    <span className="text-rose-600 font-bold">{dossier.retard}</span>
+                    <button
+                      onClick={() => onNavigate('simulateur')}
+                      className="text-slate-900 hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <span>Auditer</span>
+                      <MdArrowForward size={12} />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* 2 & 3. Dossiers en Surveillance (2 tuiles d'alerte) */}
-        <div className="md:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Tuile 1 */}
-          <div className="glass-card-white flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="w-7 h-7 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center text-xs font-bold font-mono-num">
-                #22
-              </span>
-              <button
-                onClick={() => onNavigate('portefeuille')}
-                className="hover:text-slate-800 cursor-pointer"
-              >
-                <MdMoreHoriz size={18} />
-              </button>
+          {/* Bannière Action Simulation */}
+          <div
+            onClick={() => onNavigate('simulateur')}
+            className="mt-4 p-3 rounded-2xl bg-[#18181B] text-white flex items-center justify-between cursor-pointer hover:bg-black transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-sm">
+                <MdCalculate />
+              </div>
+              <div>
+                <span className="text-xs font-bold block leading-tight">Simulateur d'Octroi en Temps Réel</span>
+                <span className="text-[10px] text-slate-400">Calculer le score de solvabilité pour un nouveau sociétaire</span>
+              </div>
             </div>
-
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 mb-0.5">
-                Dossier #22847 (MECYD)
-              </h4>
-              <p className="text-[11px] text-slate-500 truncate font-medium">
-                Commerce · 700 000 FCFA
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
-              <span>Échéance du Jour</span>
-              <button
-                onClick={() => onNavigate('simulateur')}
-                className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-sm hover:bg-black transition-colors"
-                title="Évaluer ce dossier"
-              >
-                <MdNotificationsNone size={13} />
-              </button>
-            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-white text-black shadow-sm">
+              Ouvrir
+            </span>
           </div>
-
-          {/* Tuile 2 */}
-          <div className="glass-card-white flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="w-7 h-7 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center text-xs font-bold font-mono-num">
-                #42
-              </span>
-              <button
-                onClick={() => onNavigate('portefeuille')}
-                className="hover:text-slate-800 cursor-pointer"
-              >
-                <MdMoreHoriz size={18} />
-              </button>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-bold text-slate-900 mb-0.5">
-                Dossier #42001 (CEC Banlieue)
-              </h4>
-              <p className="text-[11px] text-slate-500 truncate font-medium">
-                Consommation · 1 300 000 FCFA
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
-              <span>Échéance : 02.09.2026</span>
-              <MdNotificationsNone size={15} className="text-slate-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Action Rapide de Simulation */}
-        <div
-          onClick={() => onNavigate('simulateur')}
-          className="md:col-span-3 glass-card-dashed group"
-        >
-          <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-slate-900 group-hover:text-white transition-all flex items-center justify-center text-slate-600 mb-2 shadow-inner">
-            <MdAdd size={22} />
-          </div>
-          <span className="text-xs font-bold text-slate-800 group-hover:text-slate-900">
-            + Simuler un Prêt
-          </span>
-          <span className="text-[10px] text-slate-400 mt-0.5 font-medium">
-            Évaluer le risque en temps réel
-          </span>
         </div>
       </div>
 
-      {/* ── LIGNE 3 : Derniers Financements Octroyés */}
-      <div>
-        <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-sm font-bold tracking-tight text-slate-900">
-            Derniers Financements Octroyés
-          </h3>
-          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-            <span className="cursor-pointer hover:text-slate-900">Trier par date ▾</span>
-            <button
-              onClick={() => onNavigate('portefeuille')}
-              className="text-xs font-bold text-slate-900 hover:text-indigo-600 flex items-center gap-1 cursor-pointer"
-            >
-              Voir l'ensemble du registre <MdArrowForward size={14} />
-            </button>
+      {/* ── LIGNE 3 : PERFORMANCE COMPARATIVE DES CAISSES (RÉSEAU SÉNÉGAL) ── */}
+      <div className="glass-card-white">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+          <div>
+            <h3 className="text-sm font-bold tracking-tight text-slate-900">
+              Benchmark Régional des Caisses & Mutuelles
+            </h3>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Comparatif du volume d'octroi, des encours restants et du taux de défaut
+            </p>
           </div>
+          <span className="text-xs font-bold text-slate-700">
+            5 Caisses Répertoriées
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Prêt 1 */}
-          <div className="glass-card-dark flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold text-white tracking-tight">
-                Crédit Trésorerie AFSSEF
-              </h4>
-              <div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center text-[10px] font-mono-num font-bold">
-                80%
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+          {data.agences?.map((ag: any) => (
+            <div
+              key={ag.agence}
+              onClick={() => handleAgenceChange(ag.agence)}
+              className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                selectedAgence === ag.agence
+                  ? 'bg-[#18181B] text-white border-black shadow-md'
+                  : 'bg-white/70 hover:bg-white text-slate-900 border-slate-200/80 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className={`text-xs font-black ${selectedAgence === ag.agence ? 'text-white' : 'text-slate-900'}`}>
+                  {ag.agence}
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  ag.taux_defaut > 15
+                    ? 'bg-rose-100 text-rose-800'
+                    : ag.taux_defaut > 8
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}>
+                  {ag.taux_defaut}% déf.
+                </span>
+              </div>
+
+              <div>
+                <span className="text-base font-black font-mono-num block">
+                  {fmt(Math.round(ag.montant_debourse / 1_000_000))} M
+                </span>
+                <span className={`text-[10px] font-medium block ${selectedAgence === ag.agence ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {fmt(ag.total_credits)} dossiers financés
+                </span>
+              </div>
+
+              <div className={`mt-2 pt-2 border-t text-[10px] flex justify-between font-mono-num ${
+                selectedAgence === ag.agence ? 'border-white/10 text-slate-400' : 'border-slate-100 text-slate-500'
+              }`}>
+                <span>Solde :</span>
+                <span className="font-bold">{fmt(Math.round(ag.solde_restant / 1_000_000))} M F</span>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>Sociétaire #2521 · CEC Plateau</span>
-            </div>
-
-            <div className="text-[11px] text-slate-400 pt-3 border-t border-white/10 flex items-center justify-between font-mono-num">
-              <span>Capital : 700 000 FCFA</span>
-              <span className="text-emerald-400 font-bold">Crédit Sain</span>
-            </div>
-          </div>
-
-          {/* Prêt 2 */}
-          <div className="glass-card-dark flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold text-white tracking-tight">
-                Crédit Équipement DER/PAM
-              </h4>
-              <div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center text-[10px] font-mono-num font-bold">
-                50%
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span>Sociétaire #3776 · MECYD</span>
-            </div>
-
-            <div className="text-[11px] text-slate-400 pt-3 border-t border-white/10 flex items-center justify-between font-mono-num">
-              <span>Capital : 2 000 000 FCFA</span>
-              <span className="text-amber-400 font-bold">Vigilance</span>
-            </div>
-          </div>
-
-          {/* Prêt 3 */}
-          <div className="glass-card-dark flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold text-white tracking-tight">
-                Micro-Entrepreneurs Yeumbeul
-              </h4>
-              <div className="w-6 h-6 rounded-full border border-white/30 flex items-center justify-center text-[10px] font-mono-num font-bold">
-                100%
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span>Sociétaire #9049 · MECREST</span>
-            </div>
-
-            <div className="text-[11px] text-slate-400 pt-3 border-t border-white/10 flex items-center justify-between font-mono-num">
-              <span>Capital : 1 300 000 FCFA</span>
-              <span className="text-emerald-400 font-bold">Clôturé Sain</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
-export async function fetchOverview() {
-  const res = await fetch(`${BASE_URL}/api/overview`);
+export async function fetchOverview(agence?: string) {
+  const query = agence && agence !== 'ALL' ? `?agence=${encodeURIComponent(agence)}` : '';
+  const res = await fetch(`${BASE_URL}/api/overview${query}`);
   if (!res.ok) throw new Error("Erreur lors de la récupération de la vue d'ensemble");
   return res.json();
 }

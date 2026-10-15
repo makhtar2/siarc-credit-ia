@@ -41,9 +41,17 @@ class PredictRequest(BaseModel):
 
 # ────────────────────────────────────── GET /api/overview
 @app.get("/api/overview")
-def get_overview():
-    df = get_data()
+def get_overview(agence: Optional[str] = None):
+    full_df = get_data()
+    df = full_df
+
+    if agence and agence != "ALL":
+        df = df[df["agence"] == agence]
+
     total_credits = int(len(df))
+    if total_credits == 0:
+        return {"error": "Aucun crédit trouvé"}
+
     total_debourse = float(df["montant_debourse"].sum())
     total_solde = float(df["solde_credit"].sum())
     taux_remboursement = float(df["taux_amortissement"].mean() * 100)
@@ -59,9 +67,80 @@ def get_overview():
     taux_sain = round((nb_sain / total_credits) * 100, 2)
     par_30 = round(((nb_vigilance + nb_defaut) / total_credits) * 100, 2)
 
-    # Statistiques par agence
+    # Encours à risque en FCFA
+    encours_defaut = float(df[df["statut"] == "Défaut"]["solde_credit"].sum())
+    encours_vigilance = float(df[df["statut"] == "Vigilance"]["solde_credit"].sum())
+    encours_sain = float(df[df["statut"] == "Sain"]["solde_credit"].sum())
+
+    # Calcul réglementaire des provisions BCEAO
+    def calc_provision(row):
+        r = row["retard_brut"]
+        s = row["solde_credit"]
+        if "181" in r:
+            return s * 1.0
+        elif "91" in r:
+            return s * 0.5
+        elif "61" in r or "31" in r:
+            return s * 0.2
+        elif "1 à 30" in r:
+            return s * 0.05
+        return 0.0
+
+    provisions_bceao = float(df.apply(calc_provision, axis=1).sum())
+
+    # Flux mensuels réels (12 mois)
+    mois_noms = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
+    flux_mensuels = []
+    for m in range(1, 13):
+        m_df = df[df["mois_ouverture"] == m]
+        deb = float(m_df["montant_debourse"].sum()) / 1_000_000
+        solde = float(m_df["solde_credit"].sum()) / 1_000_000
+        amorti = max(0.0, deb - solde)
+        flux_mensuels.append({
+            "mois": mois_noms[m - 1],
+            "mois_num": m,
+            "debourse": round(deb, 1),
+            "solde": round(solde, 1),
+            "amorti": round(amorti, 1),
+            "credits": int(len(m_df)),
+            "defauts": int((m_df["statut"] == "Défaut").sum()),
+        })
+
+    # Flux annuels réels (2019 à 2026)
+    flux_annuels = []
+    for annee in sorted(df["annee_ouverture"].unique()):
+        if annee >= 2019:
+            a_df = df[df["annee_ouverture"] == annee]
+            flux_annuels.append({
+                "annee": int(annee),
+                "debourse": round(float(a_df["montant_debourse"].sum()) / 1_000_000, 1),
+                "solde": round(float(a_df["solde_credit"].sum()) / 1_000_000, 1),
+                "credits": int(len(a_df)),
+                "defauts": int((a_df["statut"] == "Défaut").sum()),
+            })
+
+    # Top 6 des dossiers en contentieux prioritaires (Plus grandes créances à recouvrer)
+    defauts_df = df[df["statut"] == "Défaut"].sort_values(by="solde_credit", ascending=False).head(6)
+    dossiers_prioritaires = []
+    for _, r in defauts_df.iterrows():
+        dossiers_prioritaires.append({
+            "numero_credit": int(r["numero_credit"]),
+            "numero_membre": int(r["numero_membre"]),
+            "agence": str(r["agence"]),
+            "secteur": str(r["secteur_activite"]),
+            "type_groupe": str(r["type_groupe"]),
+            "montant_debourse": float(r["montant_debourse"]),
+            "solde_credit": float(r["solde_credit"]),
+            "retard": str(r["retard_brut"]),
+            "age": int(r["age"]),
+            "annee": int(r["annee_ouverture"]),
+            "mois": int(r["mois_ouverture"]),
+            "nb_credits_anterieurs": int(r["nb_credits_anterieurs"]),
+        })
+
+    # Statistiques par agence (calculées sur full_df)
     agences_list = []
-    for ag, group in df.groupby("agence"):
+    for ag, group in full_df.groupby("agence"):
         ag_total = len(group)
         ag_defaut = (group["statut"] == "Défaut").sum()
         ag_vigilance = (group["statut"] == "Vigilance").sum()
@@ -99,13 +178,17 @@ def get_overview():
         })
     types_list.sort(key=lambda x: x["count"], reverse=True)
 
-    # Tranches de retard d'origine
     retard_distribution = df["retard_brut"].value_counts().to_dict()
 
     return {
+        "agence_filtree": agence or "ALL",
         "total_credits": total_credits,
         "total_debourse": total_debourse,
         "total_solde": total_solde,
+        "encours_defaut": encours_defaut,
+        "encours_vigilance": encours_vigilance,
+        "encours_sain": encours_sain,
+        "provisions_bceao": round(provisions_bceao, 2),
         "montant_moyen_debourse": round(float(df["montant_debourse"].mean()), 2),
         "solde_moyen": round(float(df["solde_credit"].mean()), 2),
         "taux_remboursement_moyen": round(taux_remboursement, 2),
@@ -118,6 +201,9 @@ def get_overview():
             "Vigilance": nb_vigilance,
             "Défaut": nb_defaut,
         },
+        "flux_mensuels": flux_mensuels,
+        "flux_annuels": flux_annuels,
+        "dossiers_prioritaires": dossiers_prioritaires,
         "agences": agences_list,
         "secteurs": secteurs_list[:8],
         "types_groupe": types_list,
