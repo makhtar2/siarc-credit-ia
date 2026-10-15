@@ -13,16 +13,16 @@ import {
   MdErrorOutline,
   MdTrendingUp,
   MdGavel,
-  MdHelpOutline,
   MdSecurity,
   MdLightbulb,
+  MdArrowForward,
 } from 'react-icons/md';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Spinner } from '../components/ui/Spinner';
 import { StatusBadge } from '../components/ui/Badge';
 import { PageHeader } from '../components/ui/PageHeader';
 import { fetchOptions, predictCredit, PredictPayload } from '../lib/api';
-import { fmt, fmtFCFA, fmtPct, statusColor, statusLightColor, statusBorderColor, C } from '../lib/utils';
+import { fmt, fmtFCFA, statusColor } from '../lib/utils';
 
 export function PredictionPage() {
   const [options, setOptions] = useState<any>(null);
@@ -77,7 +77,7 @@ export function PredictionPage() {
     }));
   };
 
-  if (!options) return <Spinner message="Initialisation du moteur de scoring crédit..." />;
+  if (!options) return <Spinner message="Initialisation du moteur de scoring..." />;
 
   const isPredictDone = result !== null;
 
@@ -85,9 +85,9 @@ export function PredictionPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Simulateur d'Octroi"
-        accent="& Scoring de Crédit"
-        subtitle="Outil d'aide à la décision pour comités de crédit bancaire et agents d'analyse du risque"
-        badge="Aide à la Décision en Temps Réel"
+        accent="& Scoring Crédit"
+        subtitle="Aide à la décision en temps réel pour le comité d'engagement et de gestion du risque"
+        badge="Scoring Temps Réel"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -95,11 +95,11 @@ export function PredictionPage() {
         <div className="lg:col-span-7">
           <Card>
             <CardHeader
-              title="Paramètres de la Demande de Financement"
-              subtitle="Renseignez les données sociodémographiques et financières du dossier"
+              title="Paramètres de la Demande"
+              subtitle="Renseignez le profil sociodémographique et financier du sociétaire"
               icon={<MdCalculate />}
-              iconColor={C.indigo600}
-              iconBg={C.indigo50}
+              iconColor="#18181B"
+              iconBg="#F4F4F5"
             />
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,7 +144,7 @@ export function PredictionPage() {
               {/* Type de produit */}
               <div>
                 <label className="input-label flex items-center gap-1.5">
-                  <MdPayments className="text-slate-400" /> Type de Financement
+                  <MdPayments className="text-slate-400" /> Famille de Financement
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {options.types_groupe.map((tg: string) => {
@@ -154,10 +154,10 @@ export function PredictionPage() {
                         type="button"
                         key={tg}
                         onClick={() => setFormData({ ...formData, type_groupe: tg })}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all text-center ${
+                        className={`px-3 py-2 rounded-full text-xs font-bold border transition-all text-center cursor-pointer ${
                           isSelected
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-[#18181B] text-white border-black shadow-sm'
+                            : 'bg-white/70 text-slate-700 border-slate-200 hover:bg-white'
                         }`}
                       >
                         {tg}
@@ -196,7 +196,7 @@ export function PredictionPage() {
                         key={v}
                         type="button"
                         onClick={() => handleShortcutMontant(v)}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-[#18181B] hover:text-white text-slate-700 transition-colors cursor-pointer"
                       >
                         {v >= 1_000_000 ? `${v / 1_000_000}M` : `${v / 1_000}k`}
                       </button>
@@ -239,7 +239,7 @@ export function PredictionPage() {
                         solde_credit: Number(e.target.value),
                       })
                     }
-                    className="w-full mt-2 accent-indigo-600"
+                    className="w-full mt-2 accent-slate-900 cursor-pointer"
                   />
                 </div>
               </div>
@@ -251,7 +251,7 @@ export function PredictionPage() {
                     <span className="flex items-center gap-1.5">
                       <MdPerson className="text-slate-400" /> Âge
                     </span>
-                    <span className="font-mono-num text-slate-700 font-bold">{formData.age} ans</span>
+                    <span className="font-mono-num text-slate-900 font-bold">{formData.age} ans</span>
                   </label>
                   <input
                     type="range"
@@ -259,7 +259,7 @@ export function PredictionPage() {
                     max={75}
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })}
-                    className="w-full accent-indigo-600 mt-1"
+                    className="w-full accent-slate-900 mt-1 cursor-pointer"
                   />
                 </div>
 
@@ -268,7 +268,7 @@ export function PredictionPage() {
                     <span className="flex items-center gap-1.5">
                       <MdHistory className="text-slate-400" /> Crédits Antérieurs
                     </span>
-                    <span className="font-mono-num text-slate-700 font-bold">{formData.nb_credits_anterieurs}</span>
+                    <span className="font-mono-num text-slate-900 font-bold">{formData.nb_credits_anterieurs}</span>
                   </label>
                   <input
                     type="range"
@@ -278,7 +278,7 @@ export function PredictionPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, nb_credits_anterieurs: Number(e.target.value) })
                     }
-                    className="w-full accent-indigo-600 mt-1"
+                    className="w-full accent-slate-900 mt-1 cursor-pointer"
                   />
                 </div>
 
@@ -287,7 +287,7 @@ export function PredictionPage() {
                     <span className="flex items-center gap-1.5">
                       <MdCalendarMonth className="text-slate-400" /> Mois d'Octroi
                     </span>
-                    <span className="font-mono-num text-slate-700 font-bold">Mois {formData.mois_ouverture}</span>
+                    <span className="font-mono-num text-slate-900 font-bold">Mois {formData.mois_ouverture}</span>
                   </label>
                   <input
                     type="range"
@@ -295,7 +295,7 @@ export function PredictionPage() {
                     max={12}
                     value={formData.mois_ouverture}
                     onChange={(e) => setFormData({ ...formData, mois_ouverture: Number(e.target.value) })}
-                    className="w-full accent-indigo-600 mt-1"
+                    className="w-full accent-slate-900 mt-1 cursor-pointer"
                   />
                 </div>
               </div>
@@ -305,14 +305,14 @@ export function PredictionPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-submit"
+                  className="btn-pill-dark w-full justify-center !py-3.5 text-xs uppercase tracking-wider"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
                       <MdTrendingUp size={18} />
-                      <span>Calculer le Score & Évaluer le Risque de Contrepartie</span>
+                      <span>Calculer le Score & Évaluer le Risque</span>
                     </>
                   )}
                 </button>
@@ -324,40 +324,33 @@ export function PredictionPage() {
         {/* ── Scoring Result Section (5/12 cols) */}
         <div className="lg:col-span-5">
           {!isPredictDone ? (
-            <Card className="h-full flex flex-col items-center justify-center text-center p-8 border-dashed border-2 border-slate-200">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-3xl mb-3 shadow-inner">
+            <div className="glass-card-dashed h-full min-h-[380px]">
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm text-slate-800 flex items-center justify-center text-2xl mb-3">
                 <MdSecurity />
               </div>
-              <h3 className="text-base font-bold text-slate-800 mb-1">
-                Simulateur en Attente de Saisie
+              <h3 className="text-sm font-bold text-slate-800 mb-1">
+                En Attente d'Évaluation
               </h3>
-              <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
-                Renseignez les caractéristiques du prêt ci-contre puis cliquez sur{' '}
-                <strong className="text-indigo-600">Calculer le Score</strong> pour obtenir l'arbitrage
-                prudentiel et l'indice de défaillance.
+              <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                Renseignez les données du dossier ci-contre puis cliquez sur{' '}
+                <strong className="text-slate-900">Calculer le Score</strong> pour générer l'avis officiel du comité.
               </p>
-            </Card>
+            </div>
           ) : (
             <div className="space-y-4 animate-fade-in">
-              {/* Main Decision Banner */}
-              <div
-                className="p-5 rounded-2xl border shadow-sm transition-all"
-                style={{
-                  backgroundColor: statusLightColor(result.prediction),
-                  borderColor: statusBorderColor(result.prediction),
-                }}
-              >
-                <div className="flex items-center justify-between mb-3">
+              {/* Main Decision Banner (Matching Obsidian Style) */}
+              <div className="glass-card-dark">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    {result.prediction === 'Sain' && <MdCheckCircle className="text-2xl text-emerald-600" />}
-                    {result.prediction === 'Vigilance' && <MdWarningAmber className="text-2xl text-amber-600" />}
-                    {result.prediction === 'Défaut' && <MdErrorOutline className="text-2xl text-rose-600" />}
-                    <h3 className="text-base font-black tracking-tight text-slate-900">
+                    {result.prediction === 'Sain' && <MdCheckCircle className="text-2xl text-emerald-400" />}
+                    {result.prediction === 'Vigilance' && <MdWarningAmber className="text-2xl text-amber-400" />}
+                    {result.prediction === 'Défaut' && <MdErrorOutline className="text-2xl text-rose-400" />}
+                    <h3 className="text-base font-black tracking-tight text-white">
                       {result.statut_label}
                     </h3>
                   </div>
                   <span
-                    className="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"
+                    className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm"
                     style={{
                       backgroundColor: statusColor(result.prediction),
                       color: '#FFFFFF',
@@ -368,10 +361,10 @@ export function PredictionPage() {
                 </div>
 
                 {/* Score Circular Metric */}
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-white/60 shadow-sm flex items-center justify-between">
+                <div className="bg-white rounded-2xl p-4 text-slate-900 shadow-sm flex items-center justify-between mb-3">
                   <div>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      Score de Solvabilité Bancaire
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Score de Solvabilité
                     </span>
                     <div className="flex items-baseline gap-1 mt-0.5">
                       <span className="text-3xl font-black font-mono-num text-slate-900">
@@ -382,20 +375,20 @@ export function PredictionPage() {
                   </div>
 
                   <div className="text-right">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                       Indice de Confiance
                     </span>
-                    <p className="text-lg font-black font-mono-num text-indigo-700">
+                    <p className="text-lg font-black font-mono-num text-slate-900">
                       {(result.confiance * 100).toFixed(1)}%
                     </p>
                   </div>
                 </div>
 
                 {/* Recommendation Box */}
-                <div className="mt-3 p-3 rounded-xl bg-white/70 border border-white text-xs text-slate-800 leading-relaxed flex items-start gap-2">
-                  <MdGavel className="text-base text-slate-600 flex-shrink-0 mt-0.5" />
+                <div className="p-3 rounded-xl bg-white/10 border border-white/10 text-xs text-slate-200 leading-relaxed flex items-start gap-2">
+                  <MdGavel className="text-base text-slate-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold block mb-0.5">Avis du Comité d'Engagement :</span>
+                    <span className="font-bold block mb-0.5 text-white">Avis du Comité d'Engagement :</span>
                     {result.recommandation}
                   </div>
                 </div>
@@ -404,11 +397,11 @@ export function PredictionPage() {
               {/* Probabilities Distribution */}
               <Card>
                 <CardHeader
-                  title="Probabilités par Classe de Risque"
-                  subtitle="Distribution bayésienne calculée par l'ensemble des arbres"
+                  title="Probabilités par Profil de Risque"
+                  subtitle="Distribution bayésienne calculée sur l'ensemble des arbres"
                   icon={<MdTrendingUp />}
-                  iconColor="#7C3AED"
-                  iconBg="#F5F3FF"
+                  iconColor="#18181B"
+                  iconBg="#F4F4F5"
                 />
 
                 <div className="space-y-3 pt-1">
@@ -420,12 +413,12 @@ export function PredictionPage() {
                       return (
                         <div key={classe} className="space-y-1">
                           <div className="flex justify-between items-center text-xs">
-                            <span className="font-semibold text-slate-700">{classe}</span>
+                            <span className="font-bold text-slate-800">{classe}</span>
                             <span className="font-mono-num font-bold" style={{ color }}>
                               {(proba * 100).toFixed(1)}%
                             </span>
                           </div>
-                          <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                          <div className="w-full h-2 rounded-full bg-slate-200/70 overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{ width: `${pct}%`, backgroundColor: color }}
@@ -438,15 +431,15 @@ export function PredictionPage() {
                 </div>
               </Card>
 
-              {/* Explanatory Factors */}
+              {/* Explanatory Factors (Tiles Matching Mockup) */}
               {result.facteurs && result.facteurs.length > 0 && (
                 <Card>
                   <CardHeader
-                    title="Facteurs Clés d'Explicabilité"
-                    subtitle="Principaux signaux ayant influencé l'évaluation"
+                    title="Facteurs d'Explicabilité"
+                    subtitle="Principaux signaux ayant guidé l'arbitrage"
                     icon={<MdLightbulb />}
-                    iconColor="#059669"
-                    iconBg="#ECFDF5"
+                    iconColor="#18181B"
+                    iconBg="#F4F4F5"
                   />
 
                   <div className="space-y-2">
@@ -457,19 +450,19 @@ export function PredictionPage() {
                       return (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-xs"
+                          className="flex items-center justify-between p-2.5 rounded-2xl bg-white/70 border border-slate-200/60 text-xs shadow-sm"
                         >
                           <div>
-                            <span className="font-bold text-slate-800 block">{f.facteur}</span>
-                            <span className="text-slate-500 text-[11px]">{f.detail}</span>
+                            <span className="font-bold text-slate-900 block">{f.facteur}</span>
+                            <span className="text-slate-500 text-[11px] font-medium">{f.detail}</span>
                           </div>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                               isPositive
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : isNegative
                                 ? 'bg-rose-100 text-rose-800'
-                                : 'bg-slate-200 text-slate-700'
+                                : 'bg-slate-100 text-slate-700'
                             }`}
                           >
                             {f.impact}

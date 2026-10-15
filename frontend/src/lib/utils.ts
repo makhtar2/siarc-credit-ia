@@ -1,10 +1,5 @@
 export const C = {
-  indigo600: '#4F46E5',
-  indigo500: '#6366F1',
-  indigo50:  '#EEF2FF',
-  indigo100: '#E0E7FF',
-  violet600: '#7C3AED',
-  violet50:  '#F5F3FF',
+  black:     '#18181B',
   slate900:  '#0F172A',
   slate700:  '#334155',
   slate500:  '#64748B',
@@ -12,26 +7,26 @@ export const C = {
   slate200:  '#E2E8F0',
   slate100:  '#F1F5F9',
   slate50:   '#F8FAFC',
-  success:   '#059669',
+  success:   '#10B981',
   successLight: '#ECFDF5',
   successBorder: '#A7F3D0',
-  warning:   '#D97706',
+  warning:   '#F59E0B',
   warningLight: '#FFFBEB',
   warningBorder: '#FDE68A',
-  danger:    '#DC2626',
+  danger:    '#EF4444',
   dangerLight: '#FEF2F2',
   dangerBorder: '#FECACA',
 };
 
 export const CHART_PALETTE = [
-  '#4F46E5', // Indigo
-  '#059669', // Emerald
-  '#D97706', // Amber
-  '#7C3AED', // Violet
-  '#0284C7', // Sky
-  '#E11D48', // Rose
-  '#D946EF', // Fuchsia
-  '#0D9488', // Teal
+  '#18181B', // Obsidian Black
+  '#3F3F46', // Charcoal
+  '#71717A', // Slate Gray
+  '#10B981', // Emerald
+  '#F59E0B', // Amber
+  '#EF4444', // Rose
+  '#A1A1AA', // Silver
+  '#27272A', // Dark Slate
 ];
 
 export function fmt(n: number | null | undefined): string {
@@ -65,7 +60,7 @@ export function statusColor(status: string): string {
     case 'Défaut':
       return C.danger;
     default:
-      return C.indigo600;
+      return C.black;
   }
 }
 
@@ -78,7 +73,7 @@ export function statusLightColor(status: string): string {
     case 'Défaut':
       return C.dangerLight;
     default:
-      return C.indigo50;
+      return '#F4F4F5';
   }
 }
 
@@ -91,6 +86,6 @@ export function statusBorderColor(status: string): string {
     case 'Défaut':
       return C.dangerBorder;
     default:
-      return C.indigo100;
+      return '#E4E4E7';
   }
 }
