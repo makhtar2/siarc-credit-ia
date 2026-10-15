@@ -19,6 +19,8 @@ import {
   MdDownload,
   MdRefresh,
   MdKeyboardArrowDown,
+  MdClose,
+  MdCalculate,
 } from 'react-icons/md';
 import { Card, CardHeader } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
@@ -47,9 +49,16 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 interface DonneesPageProps {
   initialAgence?: string;
   initialStatut?: string;
+  initialSearch?: string;
+  onSimulate?: (credit: any) => void;
 }
 
-export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps = {}) {
+export function DonneesPage({
+  initialAgence,
+  initialStatut,
+  initialSearch,
+  onSimulate,
+}: DonneesPageProps = {}) {
   const [overview, setOverview] = useState<any>(null);
   const [creditsData, setCreditsData] = useState<any>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
@@ -59,12 +68,13 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
   const [pageSize] = useState(12);
   const [filterAgence, setFilterAgence] = useState(initialAgence || 'ALL');
   const [filterStatut, setFilterStatut] = useState(initialStatut || 'ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch || '');
 
   useEffect(() => {
     if (initialAgence) setFilterAgence(initialAgence);
     if (initialStatut) setFilterStatut(initialStatut);
-  }, [initialAgence, initialStatut]);
+    if (initialSearch !== undefined) setSearchQuery(initialSearch);
+  }, [initialAgence, initialStatut, initialSearch]);
 
   useEffect(() => {
     fetchOverview().then(setOverview).catch(console.error);
@@ -360,17 +370,30 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 p-3 bg-white/60 rounded-2xl border border-slate-200/60 backdrop-blur-sm">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
             <div className="relative">
-              <MdSearch className="absolute left-3.5 top-3 text-slate-400 text-base" />
+              <MdSearch className="absolute left-3.5 top-3 text-slate-400 text-base pointer-events-none" />
               <input
                 type="text"
-                placeholder="Rechercher N° Crédit, Membre..."
+                placeholder="Rechercher par N° (#1042), membre, agence, secteur..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-9 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black shadow-xs"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPage(1);
+                  }}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-black p-0.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Effacer la recherche"
+                >
+                  <MdClose size={14} />
+                </button>
+              )}
             </div>
 
             <div className="custom-select-wrapper">
@@ -423,6 +446,31 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
           )}
         </div>
 
+        {/* Active Search Indicator */}
+        {searchQuery.trim() && (
+          <div className="flex items-center justify-between p-2.5 px-3.5 mb-3 bg-[#18181B] text-white rounded-2xl text-xs shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                Recherche active : <strong className="text-white font-mono">"{searchQuery}"</strong>
+              </span>
+              <span className="text-slate-400 text-[11px]">
+                ({creditsData?.total_records ?? 0} dossiers trouvés)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setPage(1);
+              }}
+              className="text-[11px] font-bold text-slate-300 hover:text-white underline cursor-pointer"
+            >
+              Effacer la recherche
+            </button>
+          </div>
+        )}
+
         {/* Table Content */}
         {loadingCredits ? (
           <div className="py-12 flex justify-center">
@@ -446,6 +494,7 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
                   <th className="py-3 px-3 text-center">Amorti %</th>
                   <th className="py-3 px-3">Retard Constaté</th>
                   <th className="py-3 px-3 text-center">Statut Risque</th>
+                  <th className="py-3 px-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700 font-medium">
@@ -479,6 +528,19 @@ export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps =
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <StatusBadge status={credit.statut} size="sm" />
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      {onSimulate && (
+                        <button
+                          type="button"
+                          onClick={() => onSimulate(credit)}
+                          className="btn-pill-white !py-1 !px-2.5 text-[10px] shadow-xs hover:border-black cursor-pointer inline-flex items-center gap-1"
+                          title="Évaluer ce dossier dans le simulateur"
+                        >
+                          <MdCalculate size={13} />
+                          <span>Auditer</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -21,10 +21,10 @@ import { DashboardOverview } from './pages/DashboardOverview';
 import { DonneesPage } from './pages/DonneesPage';
 import { ModelePage } from './pages/ModelePage';
 import { PredictionPage } from './pages/PredictionPage';
-import { fetchOverview } from './lib/api';
+import { fetchOverview, fetchCredits } from './lib/api';
 import { Spinner } from './components/ui/Spinner';
 import { LogoBrand } from './components/ui/Logo';
-import { formatAgence } from './lib/utils';
+import { formatAgence, fmt, statusColor } from './lib/utils';
 import liquidBg from './assets/liquid-glass-bg.jpg';
 
 const ELEMENTS_NAVIGATION = [
@@ -62,6 +62,14 @@ export default function App() {
   const [vueEnsemble, setVueEnsemble] = useState<any>(null);
   const [dateCourante, setDateCourante] = useState('');
 
+  // Spotlight Search State
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchTotalCount, setSearchTotalCount] = useState(0);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [portefeuilleSearch, setPortefeuilleSearch] = useState('');
+
   useEffect(() => {
     fetchOverview().then(setVueEnsemble).catch(console.error);
 
@@ -75,6 +83,48 @@ export default function App() {
       })
     );
   }, []);
+
+  // Raccourcis Clavier Globaux (Ctrl + K / Escape / slash)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearchModal((prev) => !prev);
+      }
+      if (e.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+        e.preventDefault();
+        setShowSearchModal(true);
+      }
+      if (e.key === 'Escape') {
+        setShowSearchModal(false);
+        setShowNotifications(false);
+        setShowProfileModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Débruitage & Requête de Recherche Spotlight
+  useEffect(() => {
+    if (!showSearchModal) return;
+    if (!globalSearchQuery.trim()) {
+      setSearchResults([]);
+      setSearchTotalCount(0);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setLoadingSearch(true);
+      fetchCredits({ search: globalSearchQuery.trim(), pageSize: 6, page: 1 })
+        .then((res) => {
+          setSearchResults(res.data || []);
+          setSearchTotalCount(res.total_records || 0);
+        })
+        .catch(console.error)
+        .finally(() => setLoadingSearch(false));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [globalSearchQuery, showSearchModal]);
 
   const handleNavigate = (tab: string, payload?: any) => {
     if (payload?.filterAgence) setSelectedAgence(payload.filterAgence);
@@ -285,9 +335,9 @@ export default function App() {
 
               {/* Bouton Circulaire de Recherche */}
               <button
-                onClick={() => setOngletActif('portefeuille')}
-                className="circle-btn"
-                title="Consulter le registre des crédits"
+                onClick={() => setShowSearchModal(true)}
+                className={`circle-btn relative ${showSearchModal ? 'bg-slate-200' : ''}`}
+                title="Recherche globale rapide (Ctrl + K ou /)"
               >
                 <MdSearch size={18} />
               </button>
@@ -520,6 +570,11 @@ export default function App() {
                   <DonneesPage
                     initialAgence={selectedAgence}
                     initialStatut={filtreStatut}
+                    initialSearch={portefeuilleSearch}
+                    onSimulate={(credit) => {
+                      setPrefillSimulation(credit);
+                      setOngletActif('simulateur');
+                    }}
                   />
                 )}
                 {ongletActif === 'modele' && <ModelePage />}
@@ -534,6 +589,188 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* ── MODALE SPOTLIGHT DE RECHERCHE GLOBALE (Liquid Glass) ── */}
+      {showSearchModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-start justify-center pt-16 sm:pt-24 px-4 animate-fade-in"
+          onClick={() => setShowSearchModal(false)}
+        >
+          <div
+            className="w-full max-w-2xl bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/90 shadow-2xl overflow-hidden flex flex-col text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header input */}
+            <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-[#18181B] text-white flex items-center justify-center text-base flex-shrink-0">
+                <MdSearch />
+              </div>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Rechercher par N° dossier (#1042), membre, agence, secteur, statut..."
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && globalSearchQuery.trim()) {
+                    setPortefeuilleSearch(globalSearchQuery.trim());
+                    setOngletActif('portefeuille');
+                    setShowSearchModal(false);
+                  }
+                }}
+                className="flex-1 bg-transparent text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              />
+              {globalSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setGlobalSearchQuery('')}
+                  className="text-slate-400 hover:text-black p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <MdClose size={16} />
+                </button>
+              )}
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-400 text-[10px] font-mono-num font-bold">
+                Échap
+              </span>
+            </div>
+
+            {/* Quick shortcuts if query is empty */}
+            {!globalSearchQuery.trim() && (
+              <div className="p-5 space-y-3">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Recherches Fréquentes & Raccourcis
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'Défaut (>90 jours)', query: 'Défaut' },
+                    { label: 'Commerce', query: 'COMMERCE' },
+                    { label: 'CEC Plateau', query: 'Plateau' },
+                    { label: 'CEC Banlieue', query: 'Banlieue' },
+                    { label: 'MECYD Yoff', query: 'Yoff' },
+                    { label: 'MECREST Thiès', query: 'Thiès' },
+                    { label: 'Trésorerie', query: 'Trésorerie' },
+                  ].map((sug) => (
+                    <button
+                      key={sug.label}
+                      type="button"
+                      onClick={() => setGlobalSearchQuery(sug.query)}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-[#18181B] hover:text-white transition-all cursor-pointer text-slate-700"
+                    >
+                      {sug.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+                  Astuce : vous pouvez saisir un numéro de prêt (ex: <code>#1000</code>), un code membre, ou utiliser <kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded">Ctrl + K</kbd> depuis n'importe quel écran.
+                </p>
+              </div>
+            )}
+
+            {/* Live Search Results */}
+            {globalSearchQuery.trim() && (
+              <div className="max-h-96 overflow-y-auto p-4 space-y-2">
+                {loadingSearch ? (
+                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs">
+                    <div className="w-6 h-6 border-2 border-slate-200 border-t-black rounded-full animate-spin" />
+                    <span>Recherche en cours dans les 15 188 dossiers...</span>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 text-xs">
+                    <p className="font-bold text-slate-800 mb-1">Aucun dossier trouvé</p>
+                    <p className="text-slate-400">
+                      Aucun enregistrement ne correspond à « {globalSearchQuery} ».
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between px-1 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span>{searchTotalCount} dossiers correspondants</span>
+                      <span>Action rapide</span>
+                    </div>
+
+                    {searchResults.map((cr) => (
+                      <div
+                        key={cr.numero_credit}
+                        className="p-3 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-400 hover:shadow-md transition-all flex items-center justify-between gap-3 group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: statusColor(cr.statut) }}
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono-num font-bold text-xs text-slate-900">
+                                #{cr.numero_credit}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-mono-num">
+                                (Membre {cr.numero_membre})
+                              </span>
+                              <span
+                                className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase"
+                                style={{
+                                  backgroundColor: statusColor(cr.statut) + '20',
+                                  color: statusColor(cr.statut),
+                                }}
+                              >
+                                {cr.statut}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 truncate block mt-0.5">
+                              {formatAgence(cr.agence)} · {cr.secteur_activite} · {fmt(cr.montant_debourse)} FCFA
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrefillSimulation({
+                                agence: cr.agence,
+                                secteur: cr.secteur_activite,
+                                type_groupe: cr.type_groupe,
+                                montant_debourse: cr.montant_debourse,
+                                solde_credit: cr.solde_credit,
+                                numero_credit: cr.numero_credit,
+                                retard: cr.retard_brut,
+                              });
+                              setOngletActif('simulateur');
+                              setShowSearchModal(false);
+                            }}
+                            className="btn-pill-dark !py-1 !px-2.5 text-[10px] cursor-pointer"
+                            title="Auditer ce prêt dans le simulateur"
+                          >
+                            <span>Auditer</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            {globalSearchQuery.trim() && searchResults.length > 0 && (
+              <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPortefeuilleSearch(globalSearchQuery.trim());
+                    setOngletActif('portefeuille');
+                    setShowSearchModal(false);
+                  }}
+                  className="w-full btn-pill-dark justify-center !py-2 text-xs cursor-pointer shadow-sm flex items-center gap-2"
+                >
+                  <span>Afficher tous les {searchTotalCount} résultats dans le registre des crédits</span>
+                  <MdArrowForward size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -263,6 +263,16 @@ def get_options():
     }
 
 
+AGENCE_SYNONYMS = {
+    "plateau": "CEC/PLATEAU",
+    "banlieue": "CEC_B",
+    "yoff": "MECYD",
+    "thies": "MECREST",
+    "thiès": "MECREST",
+    "ziguinchor": "MECZOR",
+}
+
+
 # ────────────────────────────────────── GET /api/credits
 @app.get("/api/credits")
 def get_credits(
@@ -283,11 +293,28 @@ def get_credits(
 
     if search:
         s = search.strip()
-        filtered = filtered[
-            filtered["numero_credit"].astype(str).str.contains(s, case=False)
-            | filtered["numero_membre"].astype(str).str.contains(s, case=False)
-            | filtered["type_credit"].str.contains(s, case=False)
-        ]
+        s_clean = s.lstrip("#").strip()
+        if s_clean.lower().startswith("id"):
+            s_clean = s_clean[2:].strip()
+        if s_clean.lower().startswith("n°"):
+            s_clean = s_clean[2:].strip()
+
+        synonym_agences = [ag for term, ag in AGENCE_SYNONYMS.items() if term in s.lower()]
+
+        mask = (
+            filtered["numero_credit"].astype(str).str.contains(s_clean if s_clean else s, case=False)
+            | filtered["numero_membre"].astype(str).str.contains(s_clean if s_clean else s, case=False)
+            | filtered["secteur_activite"].astype(str).str.contains(s, case=False)
+            | filtered["type_groupe"].astype(str).str.contains(s, case=False)
+            | filtered["type_credit"].astype(str).str.contains(s, case=False)
+            | filtered["statut"].astype(str).str.contains(s, case=False)
+            | filtered["agence"].astype(str).str.contains(s, case=False)
+            | filtered["retard_brut"].astype(str).str.contains(s, case=False)
+        )
+        if synonym_agences:
+            mask = mask | filtered["agence"].isin(synonym_agences)
+
+        filtered = filtered[mask]
 
     total_count = len(filtered)
     start_idx = (page - 1) * page_size
