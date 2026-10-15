@@ -146,19 +146,20 @@ export default function App() {
   };
 
   const handleDownloadRapportAcademique = () => {
-    const contenu = `# RAPPORT DE PROJET D'EXAMEN - WARISCORE
-## Plateforme de Pilotage & Scoring du Risque de Crédit en Microfinance
+    const contenu = `# RAPPORT TECHNIQUE & SCIENTIFIQUE - SIARC
+## Système d'Intelligence Artificielle pour l'Évaluation des Risques de Crédit
+**Dispositif :** Système Décisionnel de Gestion Prudentielle & Scoring (SFD Sénégal)
 **Auteur :** Projet d'Examen — Module Data Science & Machine Learning Appliqué
 **Jeu de Données :** DataSet_Credit.xlsx (15 188 dossiers réels SFD Sénégal)
-**Institutions :** CEC Plateau, CEC Banlieue, MECYD, MECREST, MECZOR
-**Modèle ML :** Random Forest (180 estimateurs · Accuracy 94.5% · F1-Macro 0.825)
-**Supervision Réglementaire :** Directives BCEAO relatives aux Systèmes Financiers Décentralisés (SFD)
+**Institutions Couvertes :** CEC Plateau, CEC Banlieue, MECYD, MECREST, MECZOR
+**Architecture ML :** Random Forest (180 estimateurs · Accuracy 94.5% · F1-Macro 0.825)
+**Supervision Réglementaire :** Directives prudentielles BCEAO (PAR 30, Dépréciations et Provisions)
 `;
     const blob = new Blob([contenu], { type: 'text/markdown;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `WariScore_Rapport_Academique.md`;
+    link.download = `SIARC_Rapport_Scientifique_Credit.md`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -294,7 +295,7 @@ export default function App() {
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/30">
             <div>
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                <span>WariScore SFD</span>
+                <span className="text-slate-800">SIARC · Système d'IA</span>
                 <span className="text-slate-300">/</span>
                 <span className="text-slate-700">
                   {ELEMENTS_NAVIGATION.find((e) => e.id === ongletActif)?.label}

@@ -1,13 +1,16 @@
+import os
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import pandas as pd
 from model import get_data, get_model, predict_credit
 
 app = FastAPI(
-    title="Plateforme d'Analyse et de Scoring du Risque de Crédit",
-    description="API RESTful de gestion de portefeuille et de prédiction du risque de défaut (Microfinance - Sénégal)",
+    title="SIARC · Système d’Intelligence Artificielle pour l'Évaluation des Risques de Crédit",
+    description="API RESTful & Moteur d'Inférence IA pour l'évaluation et la prévention du risque de défaut (SFD Sénégal)",
     version="1.0.0",
 )
 
@@ -354,3 +357,25 @@ def get_credits(
 @app.post("/api/predict")
 def predict_endpoint(payload: PredictRequest):
     return predict_credit(payload.dict())
+
+
+# ────────────────────────────────────── SERVICE DE L'APPLICATION FRONTEND DIST
+FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+if os.path.exists(FRONTEND_DIST):
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/")
+    async def serve_root():
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+            return {"error": "Endpoint introuvable"}
+        file_path = os.path.join(FRONTEND_DIST, full_path)
+        if full_path and os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
+

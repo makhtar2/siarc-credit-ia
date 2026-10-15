@@ -1,18 +1,17 @@
-# 🏦 WariScore · Plateforme de Pilotage & Scoring du Risque de Crédit
+# 🏦 SIARC · Système d’Intelligence Artificielle pour l'Évaluation des Risques de Crédit
 
-> **Projet d'Examen Data Science & Machine Learning**  
-> Audit de portefeuille, surveillance prudentielle BCEAO et prédiction du risque de défaut sur le jeu de données `DataSet_Credit.xlsx` (Caisses & Mutuelles d'Épargne et de Crédit du Sénégal : CEC Plateau, CEC Banlieue, MECYD, MECREST, MECZOR).
+> **Système Décisionnel & d'Aide à l'Octroi de Crédit en Microfinance (SFD Sénégal)**  
+> Audit de portefeuille, surveillance prudentielle BCEAO et inférence de Machine Learning sur le jeu de données `DataSet_Credit.xlsx` (15 188 dossiers réels : CEC Plateau, CEC Banlieue, MECYD Yoff, MECREST Thiès, MECZOR Ziguinchor).
 
 ---
 
-## 🎯 Identité & Aperçu de la Plateforme
+## 🎯 Identité & Concept du Système
 
-**WariScore** tire son nom de :
-- **« Wari »** : terme wolof désignant l'argent et le numéraire au Sénégal, ancrant la solution dans l'écosystème local de la microfinance et des SFD (Systèmes Financiers Décentralisés).
-- **« Score »** : moteur de notation actuariel et d'aide à la décision prudentielle.
-- **Logo Sur-Mesure :** Emblème géométrique moderne en verre liquide et titane obsidienne (`Logo.tsx`), associant un monogramme « W » entrelacé, un bouclier losangique de solvabilité et une pastille émeraude de conformité bancaire.
-
-L'application a été développée selon une architecture Fullstack moderne **FastAPI + React 18 + TypeScript + Tailwind CSS** avec un design system exclusif **« Liquid Glass »** (fond en rubans de soie 3D translucides, fenêtre maître dépolie `backdrop-blur-2xl`, surfaces obsidian `#18181B` et jauges circulaires concentriques). L'ensemble est 100% en français et respecte scrupuleusement la nomenclature bancaire de l'UEMOA / BCEAO.
+**SIARC** signifie **« Système d’Intelligence Artificielle pour l'Évaluation des Risques de Crédit »** :
+- **Moteur d'Inférence IA :** Modèle Random Forest Cost-Sensitive (180 estimateurs) optimisé pour la détection précoce du risque d'impayé et de défaut bancaire.
+- **Conformité Réglementaire BCEAO :** Respect strict des instructions prudentielles de l'UEMOA relatives aux SFD (calcul dynamique du PAR 30 et des dotations aux provisions réglementaires obligatoires).
+- **Design System « Liquid Glass » :** Interface utilisateur d'excellence conçue avec les standards des fintechs internationales (Linear / Stripe) : rubans de soie 3D translucides, verre dépoli `backdrop-blur-2xl`, surfaces obsidienne `#18181B` et jauges concentriques en direct.
+- **Déploiement en Ligne Unifié :** Conteneurisation Docker multi-étapes prête pour Render, Hugging Face Spaces, Railway ou VPS. Consultez le [GUIDE_DEPLOIEMENT.md](./GUIDE_DEPLOIEMENT.md).
 
 ---
 

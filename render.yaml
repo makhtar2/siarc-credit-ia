@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: siarc-credit-ia
+    env: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: Dockerfile
+    healthCheckPath: /api/overview
+    envVars:
+      - key: PORT
+        value: 10000

@@ -1,5 +1,5 @@
-# 🏦 WariScore · Rapport de Projet d'Examen
-## Plateforme de Pilotage & Scoring du Risque de Crédit en Microfinance
+# 🏦 SIARC · Rapport Scientifique & Technique de Projet d'Examen
+## Système d'Intelligence Artificielle pour l'Évaluation des Risques de Crédit
 
 **Auteur :** Projet d'Examen — Module Data Science & Machine Learning Appliqué  
 **Jeu de Données :** `DataSet_Credit.xlsx` (15 189 dossiers de crédits réels)  
@@ -10,11 +10,11 @@
 
 ## 1. Identité de la Plateforme & Enjeux Prudentiels (Régulation BCEAO)
 
-### Dénomination & Identité Visuelle : « WariScore »
-Le nom de la plateforme a été pensé pour rompre avec les dénominations génériques de la tech et s'inscrire dans la réalité locale du terrain sénégalais :
-- **« Wari »** : Terme wolof désignant l'argent, les liquidités et l'avoir monétaire. Il confère à la solution une forte légitimité culturelle auprès des mutuelles et sociétaires du Sénégal.
-- **« Score »** : Référence au moteur actuariel et prudentiel d'évaluation du risque de contrepartie.
-- **Logo Sur-Mesure (`Logo.tsx`)** : Conçu selon un langage géométrique épuré sans fioriture artificielle. Il associe un monogramme stylisé « W » en dégradé d'acier et titane obsidienne, un losange central symbolisant la solidité financière et une pastille émeraude de solvabilité et de conformité aux règles d'émission de crédit de la BCEAO.
+### Dénomination & Identité Visuelle : « SIARC »
+La dénomination du système reflète rigoureusement sa vocation scientifique, académique et institutionnelle :
+- **SIARC** : Acronyme officiel pour **Système d'Intelligence Artificielle pour l'Évaluation des Risques de Crédit**.
+- **Moteur d'Inférence IA** : Réseau décisionnel par Random Forest (180 estimateurs) entraîné sur des données empiriques réelles d'emprunteurs au Sénégal.
+- **Logo Sur-Mesure (`Logo.tsx`)** : Conçu selon un langage géométrique épuré en titane obsidienne `#18181B`. Il associe une topologie neuronale stylisée reliant les nœuds d'évaluation financière, un bouclier protecteur de solvabilité et un cœur décisionnel émeraude validant la conformité aux directives prudentielles de la BCEAO.
 
 ### Contexte Réglementaire BCEAO pour les SFD
 Dans le secteur de la microfinance en Afrique de l'Ouest (zone UEMOA), la viabilité des Systèmes Financiers Décentralisés (SFD) repose sur la maîtrise rigoureuse de la qualité de leur portefeuille de prêts.

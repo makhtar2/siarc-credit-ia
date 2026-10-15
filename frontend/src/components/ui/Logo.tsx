@@ -20,42 +20,38 @@ export function LogoIcon({ size = 'md', className = '' }: { size?: 'sm' | 'md' |
       {/* Reflet subtil de verre liquide */}
       <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/20 pointer-events-none" />
 
-      {/* Emblème Géométrique Moderne 'Wari' : Trame entrelacée stylisée */}
+      {/* Emblème Géométrique Moderne 'SIARC' : Réseau de neurones & Bouclier Prudentiel */}
       <svg
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-5/6 h-5/6 drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
       >
-        {/* Branche gauche W */}
-        <path
-          d="M6 9L11 23L14.5 14L11 9H6Z"
-          fill="url(#wariGrad1)"
-        />
-        {/* Branche droite W */}
-        <path
-          d="M26 9L21 23L17.5 14L21 9H26Z"
-          fill="url(#wariGrad2)"
-        />
-        {/* Nœud central / Losange protecteur de crédit */}
-        <path
-          d="M16 11.5L19 19L16 24L13 19L16 11.5Z"
-          fill="#FFFFFF"
-          opacity="0.95"
-        />
-        {/* Pastille émeraude de solvabilité bancaire */}
-        <circle cx="16" cy="7" r="2.2" fill="#10B981" />
+        {/* Lignes de connexion neuronales */}
+        <line x1="8" y1="10" x2="16" y2="6" stroke="#52525B" strokeWidth="1.5" strokeDasharray="2 2" />
+        <line x1="24" y1="10" x2="16" y2="6" stroke="#52525B" strokeWidth="1.5" strokeDasharray="2 2" />
+        <line x1="8" y1="10" x2="16" y2="16" stroke="#71717A" strokeWidth="1.5" />
+        <line x1="24" y1="10" x2="16" y2="16" stroke="#71717A" strokeWidth="1.5" />
+        <line x1="16" y1="16" x2="10" y2="24" stroke="#A1A1AA" strokeWidth="1.5" />
+        <line x1="16" y1="16" x2="22" y2="24" stroke="#A1A1AA" strokeWidth="1.5" />
+        <line x1="10" y1="24" x2="16" y2="27" stroke="#E4E4E7" strokeWidth="1.5" />
+        <line x1="22" y1="24" x2="16" y2="27" stroke="#E4E4E7" strokeWidth="1.5" />
 
-        <defs>
-          <linearGradient id="wariGrad1" x1="6" y1="9" x2="14.5" y2="23" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#A1A1AA" />
-            <stop offset="1" stopColor="#52525B" />
-          </linearGradient>
-          <linearGradient id="wariGrad2" x1="26" y1="9" x2="17.5" y2="23" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#E4E4E7" />
-            <stop offset="1" stopColor="#71717A" />
-          </linearGradient>
-        </defs>
+        {/* Nœuds décisionnels périphériques */}
+        <circle cx="8" cy="10" r="2.2" fill="#71717A" />
+        <circle cx="24" cy="10" r="2.2" fill="#71717A" />
+        <circle cx="10" cy="24" r="2.2" fill="#A1A1AA" />
+        <circle cx="22" cy="24" r="2.2" fill="#A1A1AA" />
+
+        {/* Nœud sommital d'inférence */}
+        <circle cx="16" cy="6" r="2.5" fill="#FFFFFF" />
+
+        {/* Nœud Central / Cœur d'arbitrage IA (Émeraude Solvabilité) */}
+        <circle cx="16" cy="16" r="4.2" fill="#10B981" />
+        <circle cx="16" cy="16" r="2" fill="#FFFFFF" />
+
+        {/* Ancrage institutionnel inférieur */}
+        <circle cx="16" cy="27" r="1.8" fill="#FFFFFF" />
       </svg>
     </div>
   );
@@ -65,12 +61,20 @@ export function LogoBrand({ size = 'md', className = '' }: LogoProps) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <LogoIcon size={size} />
-      <div className="flex flex-col">
-        <span className="text-base font-black tracking-tight text-slate-900 leading-none flex items-center gap-1">
-          Wari<span className="text-slate-500 font-semibold tracking-normal">Score</span>
-        </span>
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-          SFD · Sénégal
+      <div className="flex flex-col min-w-0 text-left">
+        <div className="flex items-center gap-1.5 leading-none">
+          <span className="text-base font-black tracking-tight text-slate-900">
+            SIARC
+          </span>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#18181B] text-emerald-400 tracking-wider font-mono uppercase shadow-xs">
+            IA
+          </span>
+        </div>
+        <span
+          className="text-[9px] font-bold text-slate-400 tracking-tight mt-1 truncate max-w-[150px]"
+          title="Système d'Intelligence Artificielle pour l'Évaluation des Risques de Crédit"
+        >
+          Évaluation Risque Crédit
         </span>
       </div>
     </div>
