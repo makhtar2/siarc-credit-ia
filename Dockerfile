@@ -8,9 +8,15 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 COPY frontend/package.json ./
-RUN npm install --frozen-lockfile || npm install
+RUN npm install
 
-COPY frontend/ ./
+COPY frontend/src ./src
+COPY frontend/index.html ./
+COPY frontend/vite.config.ts ./
+COPY frontend/tsconfig.json ./
+COPY frontend/tailwind.config.js ./
+COPY frontend/postcss.config.js ./
+
 RUN npm run build
 
 # ── Étape 2 : Image d'Exécution Python FastAPI + Scikit-Learn
