@@ -1,0 +1,29 @@
+name: Keep Render Alive (Anti-Sleep Cron Job)
+
+# Ce workflow s'exécute automatiquement toutes les 14 minutes pour empêcher
+# l'instance gratuite de Render de s'endormir (inactivité > 15 minutes).
+
+on:
+  schedule:
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Déclenchement manuel possible depuis l'onglet Actions
+
+jobs:
+  ping-render:
+    name: Ping SIARC Render Instance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Endpoint
+        run: |
+          URL="https://siarc-credit-ia.onrender.com/healthz"
+          echo "⏰ Exécution du Cron Job Anti-Veille à $(date -u)"
+          echo "📡 Ping de l'instance SIARC sur : $URL"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+          echo "HTTP Response Status : $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 301 ] || [ "$HTTP_STATUS" -eq 302 ]; then
+            echo "✅ L'instance SIARC est éveillée, active et prête !"
+          else
+            echo "ℹ️ Requête envoyée (Statut: $HTTP_STATUS). L'instance est maintenue en éveil."
+          fi

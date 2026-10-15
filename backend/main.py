@@ -23,6 +23,13 @@ app.add_middleware(
 )
 
 
+# ────────────────────────────────────── GET /healthz & /api/ping (Keep-Alive Cron)
+@app.get("/healthz")
+@app.get("/api/ping")
+def ping_health():
+    return {"status": "ok", "app": "SIARC", "alive": True}
+
+
 @app.on_event("startup")
 async def startup_event():
     print("🏦 Initialisation du modèle d'évaluation du risque de crédit...")
