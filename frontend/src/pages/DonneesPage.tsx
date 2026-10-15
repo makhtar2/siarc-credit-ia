@@ -16,6 +16,8 @@ import {
   MdTableRows,
   MdCategory,
   MdShowChart,
+  MdDownload,
+  MdRefresh,
 } from 'react-icons/md';
 import { Card, CardHeader } from '../components/ui/Card';
 import { KpiCard } from '../components/ui/KpiCard';
@@ -41,7 +43,12 @@ const ChartTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-export function DonneesPage() {
+interface DonneesPageProps {
+  initialAgence?: string;
+  initialStatut?: string;
+}
+
+export function DonneesPage({ initialAgence, initialStatut }: DonneesPageProps = {}) {
   const [overview, setOverview] = useState<any>(null);
   const [creditsData, setCreditsData] = useState<any>(null);
   const [loadingCredits, setLoadingCredits] = useState(false);
@@ -49,9 +56,14 @@ export function DonneesPage() {
   // Filters for credits table
   const [page, setPage] = useState(1);
   const [pageSize] = useState(12);
-  const [filterAgence, setFilterAgence] = useState('ALL');
-  const [filterStatut, setFilterStatut] = useState('ALL');
+  const [filterAgence, setFilterAgence] = useState(initialAgence || 'ALL');
+  const [filterStatut, setFilterStatut] = useState(initialStatut || 'ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (initialAgence) setFilterAgence(initialAgence);
+    if (initialStatut) setFilterStatut(initialStatut);
+  }, [initialAgence, initialStatut]);
 
   useEffect(() => {
     fetchOverview().then(setOverview).catch(console.error);
@@ -70,6 +82,49 @@ export function DonneesPage() {
       .catch(console.error)
       .finally(() => setLoadingCredits(false));
   }, [page, pageSize, filterAgence, filterStatut, searchQuery]);
+
+  const handleExportCSV = () => {
+    if (!creditsData?.data?.length) return;
+    const headers = [
+      'N° Crédit',
+      'N° Membre',
+      'Agence',
+      'Secteur Activité',
+      'Montant Déboursé (FCFA)',
+      'Solde Crédit (FCFA)',
+      'Taux Amortissement (%)',
+      'Retard',
+      'Statut Risque',
+    ];
+    const rows = creditsData.data.map((c: any) => [
+      c.numero_credit,
+      c.numero_membre,
+      `"${c.agence}"`,
+      `"${c.secteur_activite}"`,
+      c.montant_debourse,
+      c.solde_credit,
+      Math.round(c.taux_amortissement * 100),
+      `"${c.retard_brut}"`,
+      c.statut,
+    ]);
+    const csvContent = [headers.join(';'), ...rows.map((r: any) => r.join(';'))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `WariScore_Credits_${filterAgence}_${filterStatut}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleResetFilters = () => {
+    setFilterAgence('ALL');
+    setFilterStatut('ALL');
+    setSearchQuery('');
+    setPage(1);
+  };
 
   if (!overview) return <Spinner message="Chargement du registre de crédit..." />;
 
@@ -281,63 +336,88 @@ export function DonneesPage() {
           iconColor="#18181B"
           iconBg="#F4F4F5"
           action={
-            creditsData && (
-              <span className="text-xs font-bold text-slate-700 bg-white/80 px-3 py-1 rounded-full border border-slate-200">
-                {fmt(creditsData.total_records)} résultats
-              </span>
-            )
+            <div className="flex items-center gap-2">
+              {creditsData && (
+                <span className="text-xs font-bold text-slate-700 bg-white/80 px-3 py-1 rounded-full border border-slate-200">
+                  {fmt(creditsData.total_records)} résultats
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="btn-pill-dark !py-1 !px-3 text-xs flex items-center gap-1.5 cursor-pointer shadow-sm hover:opacity-90"
+                title="Exporter les crédits filtrés en fichier CSV"
+              >
+                <MdDownload size={14} />
+                <span>Exporter CSV</span>
+              </button>
+            </div>
           }
         />
 
         {/* Filters Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4 p-3 bg-white/60 rounded-2xl border border-slate-200/60 backdrop-blur-sm">
-          <div className="relative sm:col-span-2">
-            <MdSearch className="absolute left-3.5 top-3 text-slate-400 text-base" />
-            <input
-              type="text"
-              placeholder="Rechercher par N° Crédit, N° Membre..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(1);
-              }}
-              className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
-            />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 p-3 bg-white/60 rounded-2xl border border-slate-200/60 backdrop-blur-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+            <div className="relative">
+              <MdSearch className="absolute left-3.5 top-3 text-slate-400 text-base" />
+              <input
+                type="text"
+                placeholder="Rechercher N° Crédit, Membre..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+              />
+            </div>
+
+            <div>
+              <select
+                value={filterAgence}
+                onChange={(e) => {
+                  setFilterAgence(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+              >
+                <option value="ALL">Toutes les agences</option>
+                {overview.agences.map((ag: any) => (
+                  <option key={ag.agence} value={ag.agence}>
+                    {ag.agence}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <select
+                value={filterStatut}
+                onChange={(e) => {
+                  setFilterStatut(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+              >
+                <option value="ALL">Tous les statuts</option>
+                <option value="Sain">Sain</option>
+                <option value="Vigilance">Vigilance</option>
+                <option value="Défaut">Défaut</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <select
-              value={filterAgence}
-              onChange={(e) => {
-                setFilterAgence(e.target.value);
-                setPage(1);
-              }}
-              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
+          {(filterAgence !== 'ALL' || filterStatut !== 'ALL' || searchQuery !== '') && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="text-xs font-bold text-slate-600 hover:text-black flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer flex-shrink-0"
+              title="Réinitialiser tous les filtres"
             >
-              <option value="ALL">Toutes les agences</option>
-              {overview.agences.map((ag: any) => (
-                <option key={ag.agence} value={ag.agence}>
-                  {ag.agence}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={filterStatut}
-              onChange={(e) => {
-                setFilterStatut(e.target.value);
-                setPage(1);
-              }}
-              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black"
-            >
-              <option value="ALL">Tous les statuts</option>
-              <option value="Sain">Sain</option>
-              <option value="Vigilance">Vigilance</option>
-              <option value="Défaut">Défaut</option>
-            </select>
-          </div>
+              <MdRefresh size={15} />
+              <span>Réinitialiser</span>
+            </button>
+          )}
         </div>
 
         {/* Table Content */}

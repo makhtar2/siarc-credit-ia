@@ -23,12 +23,19 @@ import { fetchOverview } from '../lib/api';
 
 interface DashboardOverviewProps {
   overview: any;
+  selectedAgence?: string;
+  onAgenceChange?: (agence: string) => void;
   onNavigate: (tabId: string, prefill?: any) => void;
 }
 
-export function DashboardOverview({ overview: initialOverview, onNavigate }: DashboardOverviewProps) {
+export function DashboardOverview({
+  overview: initialOverview,
+  selectedAgence: parentSelectedAgence,
+  onAgenceChange,
+  onNavigate,
+}: DashboardOverviewProps) {
   const [data, setData] = useState<any>(initialOverview);
-  const [selectedAgence, setSelectedAgence] = useState<string>('ALL');
+  const [selectedAgence, setSelectedAgence] = useState<string>(parentSelectedAgence || 'ALL');
   const [fluxMode, setFluxMode] = useState<'mensuel' | 'annuel'>('mensuel');
   const [loading, setLoading] = useState(false);
 
@@ -36,8 +43,15 @@ export function DashboardOverview({ overview: initialOverview, onNavigate }: Das
     setData(initialOverview);
   }, [initialOverview]);
 
+  useEffect(() => {
+    if (parentSelectedAgence && parentSelectedAgence !== selectedAgence) {
+      handleAgenceChange(parentSelectedAgence);
+    }
+  }, [parentSelectedAgence]);
+
   const handleAgenceChange = async (ag: string) => {
     setSelectedAgence(ag);
+    if (onAgenceChange) onAgenceChange(ag);
     setLoading(true);
     try {
       const updated = await fetchOverview(ag);
@@ -47,6 +61,62 @@ export function DashboardOverview({ overview: initialOverview, onNavigate }: Das
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadAuditReport = () => {
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    const nomCaisse = selectedAgence === 'ALL' ? 'Toutes Caisses Réunies' : selectedAgence;
+    const contenu = `# RAPPORT D'AUDIT PRUDENTIEL DU RISQUE DE CRÉDIT - BCEAO
+**Plateforme :** WariScore · Microfinance Sénégal
+**Périmètre audité :** ${nomCaisse}
+**Date d'émission :** ${dateStr}
+**Norme réglementaire de référence :** Instructions BCEAO relatives à la classification des créances et au provisionnement des SFD
+
+---
+
+## 1. SYNTHÈSE DU PORTEFEUILLE SOUS GESTION
+- **Volume Total Déboursé :** ${Math.round(data.total_debourse).toLocaleString('fr-FR')} FCFA
+- **Encours Restant Dû :** ${Math.round(data.total_solde).toLocaleString('fr-FR')} FCFA
+- **Nombre Total de Dossiers de Prêt :** ${data.total_credits.toLocaleString('fr-FR')} dossiers
+- **Taux d'Amortissement Moyen du Capital :** ${data.taux_remboursement_moyen}%
+- **Portefeuille à Risque (PAR 30) :** ${data.par_30}% (Seuil prudentiel BCEAO fixé à 5.0%)
+- **Taux de Défaut Avéré (> 90 jours) :** ${data.taux_defaut}% (${data.statut_counts?.Défaut || 0} dossiers)
+- **Crédits Sains :** ${data.statut_counts?.Sain || 0} dossiers (${data.taux_sain}%)
+- **Crédits en Vigilance (1-90j) :** ${data.statut_counts?.Vigilance || 0} dossiers (${data.taux_vigilance}%)
+
+---
+
+## 2. PROVISIONS RÉGLEMENTAIRES OBLIGATOIRES (BCEAO)
+- **Dotations Globales aux Provisions Requises :** ${Math.round(data.provisions_bceao).toLocaleString('fr-FR')} FCFA
+- **Barème Prudentiel Appliqué :**
+  * Retard 1 à 30 jours : 5% de provision
+  * Retard 31 à 90 jours : 20% de provision
+  * Retard 91 à 180 jours : 50% de provision
+  * Retard > 180 jours (Créances irrécouvrables) : 100% de dépréciation
+- **Statut Prudentiel :** Dotation obligatoire à inscrire au compte d'exploitation de la caisse.
+
+---
+
+## 3. DOSSIERS EN SOUFFRANCE PRIORITAIRES (CONTENTIEUX IMMÉDIAT)
+${(data.dossiers_prioritaires || [])
+  .map(
+    (d: any, i: number) =>
+      `${i + 1}. Crédit N°${d.numero_credit} | Agence : ${d.agence} | Solde Restant : ${Math.round(d.solde_credit).toLocaleString('fr-FR')} FCFA | Retard : ${d.retard} | Secteur : ${d.secteur} (${d.type_groupe})`
+  )
+  .join('\n')}
+
+---
+*Rapport certifié généré par la plateforme WariScore · Audit & Gestion du Risque de Crédit.*
+`;
+    const blob = new Blob([contenu], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Rapport_Audit_BCEAO_${selectedAgence}_${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (!data) return null;
@@ -114,9 +184,9 @@ export function DashboardOverview({ overview: initialOverview, onNavigate }: Das
                 </h3>
               </div>
               <button
-                onClick={() => onNavigate('portefeuille')}
+                onClick={() => onNavigate('portefeuille', { filterAgence: selectedAgence })}
                 className="text-slate-400 hover:text-white transition-colors cursor-pointer text-xs font-semibold flex items-center gap-1"
-                title="Consulter le registre"
+                title="Consulter le registre filtré sur cette sélection"
               >
                 <span>Détails</span>
                 <MdArrowForward size={14} />
@@ -363,15 +433,15 @@ export function DashboardOverview({ overview: initialOverview, onNavigate }: Das
               </span>
             </div>
 
-            <a
-              href="/RAPPORT_EXAMEN_CREDIT.md"
-              target="_blank"
-              rel="noreferrer"
-              className="btn-pill-white !py-1.5 !px-3 text-xs"
+            <button
+              type="button"
+              onClick={handleDownloadAuditReport}
+              className="btn-pill-white !py-1.5 !px-3 text-xs cursor-pointer shadow-sm hover:shadow transition-all"
+              title="Télécharger l'audit prudentiel complet en Markdown"
             >
               <MdDownload size={14} />
               <span>Rapport d'Audit</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -467,8 +537,9 @@ export function DashboardOverview({ overview: initialOverview, onNavigate }: Das
                 </p>
               </div>
               <button
-                onClick={() => onNavigate('portefeuille')}
+                onClick={() => onNavigate('portefeuille', { filterStatut: 'Défaut', filterAgence: selectedAgence })}
                 className="text-xs font-bold text-slate-900 hover:text-black flex items-center gap-1 cursor-pointer"
+                title="Afficher les dossiers au contentieux dans le portefeuille"
               >
                 Voir registre <MdArrowForward size={14} />
               </button>
@@ -502,8 +573,9 @@ export function DashboardOverview({ overview: initialOverview, onNavigate }: Das
                   <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
                     <span className="text-rose-600 font-bold">{dossier.retard}</span>
                     <button
-                      onClick={() => onNavigate('simulateur')}
+                      onClick={() => onNavigate('simulateur', dossier)}
                       className="text-slate-900 hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
+                      title="Pré-remplir le simulateur avec ce dossier"
                     >
                       <span>Auditer</span>
                       <MdArrowForward size={12} />

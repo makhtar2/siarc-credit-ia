@@ -52,6 +52,63 @@ export function ModelePage() {
 
   const importanceData = [...metrics.feature_importances].reverse();
 
+  const handleExportAudit = () => {
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    const contenu = `# RAPPORT SCIENTIFIQUE DE VALIDATION DU MODÈLE DE SCORING
+**Plateforme :** WariScore · Audit & Régulation BCEAO
+**Date d'émission :** ${dateStr}
+**Algorithme :** Random Forest Classifier (180 estimateurs · max_depth=12 · class_weight='balanced')
+**Échantillon de Test Indépendant :** ${fmt(metrics.n_test)} crédits réels (stratifié 20%)
+**Base d'Entraînement :** ${fmt(metrics.n_train)} dossiers réels (80%)
+
+---
+
+## 1. PERFORMANCES GLOBALES
+- **Accuracy Globale :** ${(metrics.accuracy * 100).toFixed(2)}%
+- **F1-Score Macro :** ${fmtDecimal(metrics.f1_macro, 4)}
+- **F1-Score Pondéré :** ${fmtDecimal(metrics.f1_weighted, 4)}
+
+---
+
+## 2. RAPPORT DE CLASSIFICATION PAR PROFIL DE RISQUE
+${metrics.report
+  .map(
+    (r: any) =>
+      `- **${r.classe}** : Précision ${(r.precision * 100).toFixed(1)}% | Rappel ${(r.recall * 100).toFixed(
+        1
+      )}% | F1-Score ${fmtDecimal(r.f1, 3)} | Support : ${fmt(r.support)} dossiers`
+  )
+  .join('\n')}
+
+---
+
+## 3. IMPORTANCE DES SIGNAUX PRÉDICTIFS (GINI IMPORTANCE)
+${metrics.feature_importances
+  .map((f: any, i: number) => `${i + 1}. ${f.label} : ${(f.importance * 100).toFixed(2)}%`)
+  .join('\n')}
+
+---
+
+## 4. MATRICE DE CONFUSION (VALEURS RÉELLES VS PRÉDICTIONS)
+- Classes : ${classes.join(' | ')}
+${matrix
+  .map((row: number[], idx: number) => `- Réel ${classes[idx]} -> [ ${row.join(', ')} ]`)
+  .join('\n')}
+
+---
+*Rapport d'audit certifié pour soutenance académique · WariScore SFD Sénégal.*
+`;
+    const blob = new Blob([contenu], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Validation_Scientifique_Modele_WariScore_${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
@@ -59,6 +116,17 @@ export function ModelePage() {
         accent="du Modèle ML"
         subtitle="Random Forest Classifier (180 estimateurs) avec pondération équilibrée des classes (Cost-Sensitive Learning)"
         badge="Évaluation Stratifiée"
+        action={
+          <button
+            type="button"
+            onClick={handleExportAudit}
+            className="btn-pill-dark !py-1.5 !px-3.5 text-xs flex items-center gap-1.5 cursor-pointer shadow-sm hover:opacity-90 transition-all"
+            title="Télécharger la certification et les métriques complètes du modèle"
+          >
+            <MdAssessment size={15} />
+            <span>Exporter l'Audit ML</span>
+          </button>
+        }
       />
 
       {/* ── KPI Row */}

@@ -23,11 +23,18 @@ import { StatusBadge } from '../components/ui/Badge';
 import { PageHeader } from '../components/ui/PageHeader';
 import { fetchOptions, predictCredit, PredictPayload } from '../lib/api';
 import { fmt, fmtFCFA, statusColor } from '../lib/utils';
+import { MdDownload, MdRefresh } from 'react-icons/md';
 
-export function PredictionPage() {
+interface PredictionPageProps {
+  initialDossier?: any;
+  onClearPrefill?: () => void;
+}
+
+export function PredictionPage({ initialDossier, onClearPrefill }: PredictionPageProps = {}) {
   const [options, setOptions] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [importedCredit, setImportedCredit] = useState<any>(initialDossier || null);
 
   // Form State
   const [formData, setFormData] = useState<PredictPayload>({
@@ -46,15 +53,41 @@ export function PredictionPage() {
     fetchOptions()
       .then((opts) => {
         setOptions(opts);
-        setFormData((prev) => ({
-          ...prev,
-          agence: opts.agences[0] || 'CEC_B',
-          secteur_activite: opts.secteurs[0] || 'COMMERCE',
-          type_groupe: opts.types_groupe[0] || 'Trésorerie',
-        }));
+        if (!initialDossier) {
+          setFormData((prev) => ({
+            ...prev,
+            agence: opts.agences[0] || 'CEC_B',
+            secteur_activite: opts.secteurs[0] || 'COMMERCE',
+            type_groupe: opts.types_groupe[0] || 'Trésorerie',
+          }));
+        }
       })
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (initialDossier) {
+      setImportedCredit(initialDossier);
+      const prefilled: PredictPayload = {
+        agence: initialDossier.agence || 'CEC_B',
+        secteur_activite: initialDossier.secteur || 'COMMERCE',
+        type_groupe: initialDossier.type_groupe || 'Trésorerie',
+        annee_ouverture: initialDossier.annee || 2026,
+        mois_ouverture: initialDossier.mois || 6,
+        age: initialDossier.age || 45,
+        nb_credits_anterieurs: initialDossier.nb_credits_anterieurs || 0,
+        montant_debourse: initialDossier.montant_debourse || Math.max(initialDossier.solde_credit * 1.25, 500000),
+        solde_credit: initialDossier.solde_credit || 350000,
+      };
+      setFormData(prefilled);
+      // Auto-trigger scoring for imported dossier
+      setLoading(true);
+      predictCredit(prefilled)
+        .then(setResult)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [initialDossier]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +110,80 @@ export function PredictionPage() {
     }));
   };
 
+  const handleResetSimulation = () => {
+    setResult(null);
+    setImportedCredit(null);
+    if (onClearPrefill) onClearPrefill();
+    if (options) {
+      setFormData({
+        agence: options.agences[0] || 'CEC_B',
+        secteur_activite: options.secteurs[0] || 'COMMERCE',
+        type_groupe: options.types_groupe[0] || 'Trésorerie',
+        annee_ouverture: 2026,
+        mois_ouverture: 6,
+        age: 45,
+        nb_credits_anterieurs: 3,
+        montant_debourse: 1_000_000,
+        solde_credit: 350_000,
+      });
+    }
+  };
+
+  const handleExportAvis = () => {
+    if (!result) return;
+    const dateStr = new Date().toLocaleDateString('fr-FR');
+    const contenu = `# FICHE DÉCISIONNELLE D'OCTROI DE CRÉDIT - COMITÉ D'ENGAGEMENT
+**Plateforme :** WariScore · Notation & Prévention du Risque de Contrepartie
+**Date d'évaluation :** ${dateStr}
+
+---
+
+## 1. CARACTÉRISTIQUES DE LA DEMANDE
+- **Agence / Caisse :** ${formData.agence}
+- **Secteur d'Activité :** ${formData.secteur_activite}
+- **Famille de Crédit :** ${formData.type_groupe}
+- **Montant Déboursé :** ${formData.montant_debourse.toLocaleString('fr-FR')} FCFA
+- **Solde Restant Dû :** ${formData.solde_credit.toLocaleString('fr-FR')} FCFA (${Math.round(
+      (formData.solde_credit / (formData.montant_debourse || 1)) * 100
+    )}% d'encours)
+- **Âge de l'Emprunteur :** ${formData.age} ans
+- **Nombre de Crédits Antérieurs :** ${formData.nb_credits_anterieurs}
+
+---
+
+## 2. ARBITRAGE DU MODÈLE DE SCORING ML (RANDOM FOREST)
+- **Statut Prédit :** ${result.statut_label} (Risque ${result.niveau_risque})
+- **Score de Solvabilité :** ${result.score_credit} / 100
+- **Indice de Confiance de la Prédiction :** ${(result.confiance * 100).toFixed(1)}%
+- **Distribution des Probabilités :**
+${Object.entries(result.probabilites || {})
+  .map(([c, p]: any) => `  * ${c} : ${(p * 100).toFixed(1)}%`)
+  .join('\n')}
+
+---
+
+## 3. AVIS OFFICIEL DU COMITÉ D'ENGAGEMENT
+> ${result.recommandation}
+
+---
+
+## 4. FACTEURS CLÉS D'EXPLICABILITÉ
+${(result.facteurs || []).map((f: any) => `- [${f.impact}] ${f.facteur} : ${f.detail}`).join('\n')}
+
+---
+*Document certifié conforme aux normes prudentielles de la BCEAO · WariScore SFD Sénégal.*
+`;
+    const blob = new Blob([contenu], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Avis_Comite_Credit_${formData.agence}_${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (!options) return <Spinner message="Initialisation du moteur de scoring..." />;
 
   const isPredictDone = result !== null;
@@ -93,6 +200,29 @@ export function PredictionPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* ── Form Section (7/12 cols) */}
         <div className="lg:col-span-7">
+          {importedCredit && (
+            <div className="mb-4 p-3.5 rounded-2xl bg-[#18181B] text-white flex items-center justify-between text-xs shadow-md border border-slate-700 animate-fade-in">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                <div>
+                  <span className="font-bold block">
+                    Dossier importé depuis le Cockpit : Crédit #{importedCredit.numero_credit} ({importedCredit.agence})
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Solde en souffrance : {fmt(importedCredit.solde_credit)} FCFA · {importedCredit.retard}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleResetSimulation}
+                className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition-colors cursor-pointer"
+              >
+                Réinitialiser
+              </button>
+            </div>
+          )}
+
           <Card>
             <CardHeader
               title="Paramètres de la Demande"
@@ -473,6 +603,28 @@ export function PredictionPage() {
                   </div>
                 </Card>
               )}
+
+              {/* Barre d'Actions Décisionnelles */}
+              <div className="flex items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={handleExportAvis}
+                  className="flex-1 btn-pill-dark !py-2.5 text-xs justify-center cursor-pointer shadow-sm hover:opacity-90 flex items-center gap-1.5"
+                  title="Télécharger l'avis officiel du comité en Markdown"
+                >
+                  <MdDownload size={16} />
+                  <span>Exporter l'Avis Décisionnel (MD)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetSimulation}
+                  className="btn-pill-white !py-2.5 !px-3.5 text-xs justify-center cursor-pointer shadow-sm hover:bg-slate-100 flex items-center gap-1.5"
+                  title="Réinitialiser pour un nouveau dossier"
+                >
+                  <MdRefresh size={16} />
+                  <span>Nouvelle</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
